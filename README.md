@@ -29,7 +29,7 @@ Scores are saved per user in SQLite (`app.db`, created automatically).
    ```bash
    python app.py
    ```
-   Open http://localhost:5000
+   Open https://wordrunner.onrender.com/
 
 ## How it works
 
