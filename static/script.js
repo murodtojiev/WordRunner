@@ -45,7 +45,7 @@
   const SPAWN_GAP_MIN   = 480;
   const SPAWN_GAP_MAX   = 680;
   const QUEUE_TARGET    = 3;
-  const ANSWER_TIME     = 5;
+  const ANSWER_TIME     = 15;
   const JUMP_DURATION   = 0.5;
   const HIT_DURATION    = 0.55;
   const RING_RADIUS     = 52;
