@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Word Runner — Vocabulary & Grammar Game</title>
+<meta name="description" content="Word Runner: A cyberpunk vocabulary and grammar runner game. Master English one level at a time!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body{% if user %} data-current-level="{{ user.current_level }}" data-total-score="{{ user.total_score }}"{% endif %}>
+
+{% if user %}
+  <!-- ===== LOGGED IN: user bar + game ===== -->
+  <div class="user-bar" id="userBar">
+    <img src="{{ user.picture }}" alt="Profile picture" class="avatar">
+    <span class="user-name">{{ user.name }}</span>
+    <span id="userTotalScore" class="user-score">⭐ {{ user.total_score }}</span>
+    <span id="userLevelBadge" class="user-level">🎯 Lvl {{ user.current_level }}</span>
+    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+  </div>
+
+  <!-- ===== MAP SCREEN (default view) ===== -->
+  <section id="mapScreen" class="map-screen">
+    <div class="map-layout">
+
+      <!-- Left: Level Path -->
+      <div class="map-path-container">
+        <div class="map-header">
+          <p class="map-eyebrow">A VOCABULARY & GRAMMAR RUNNER</p>
+          <h1 class="map-title">WORD<br>RUNNER</h1>
+          <p class="map-subtitle">Complete 15 words per level to advance</p>
+        </div>
+
+        <div class="level-path" id="levelPath">
+          {% for level in range(10, 0, -1) %}
+          <div class="level-node {% if level < user.current_level %}completed{% elif level == user.current_level %}current{% else %}locked{% endif %}"
+               data-level="{{ level }}">
+            <div class="level-circle">
+              {% if level <= user.current_level %}
+                <span class="level-num">{{ level }}</span>
+              {% else %}
+                <span class="level-lock">🔒</span>
+              {% endif %}
+            </div>
+            <span class="level-label">Level {{ level }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Right: Leaderboard -->
+      <div class="leaderboard-panel" id="leaderboardPanel">
+        <h2 class="leaderboard-title">🏆 TOP 10</h2>
+        <div class="leaderboard-list" id="leaderboardList">
+          <div class="leaderboard-loading">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== GAME STAGE (hidden by default) ===== -->
+  <div class="stage hidden" id="gameStage">
+
+    <!-- ===== HUD ===== -->
+    <header class="hud" aria-hidden="false">
+      <div class="hud-block hud-lives">
+        <span class="hud-label">HP</span>
+        <div id="hearts" class="hearts" aria-live="polite"></div>
+      </div>
+
+      <div class="hud-block hud-progress">
+        <span class="hud-label">PROGRESS</span>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+          <span class="progress-text" id="progressText">0 / 15</span>
+        </div>
+      </div>
+
+      <div class="hud-block hud-level">
+        <span class="hud-label">LEVEL</span>
+        <span id="levelValue" class="hud-value">01</span>
+      </div>
+
+      <div class="hud-block hud-score">
+        <span class="hud-label">SCORE</span>
+        <span id="scoreValue" class="hud-value">0000</span>
+      </div>
+    </header>
+
+    <!-- ===== Game canvas ===== -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ===== Question / obstacle panel ===== -->
+    <section id="questionPanel" class="question-panel hidden" aria-live="assertive">
+      <div class="timer-ring-wrap">
+        <svg class="timer-ring" viewBox="0 0 120 120">
+          <circle class="timer-ring-track" cx="60" cy="60" r="52"></circle>
+          <circle id="timerRingFill" class="timer-ring-fill" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <span id="timerNumber" class="timer-number">5</span>
+      </div>
+
+      <div class="question-body">
+        <p class="question-eyebrow">OBSTACLE AHEAD — ANSWER TO JUMP</p>
+        <h2 id="questionText" class="question-text">Loading…</h2>
+        <div id="optionsGrid" class="options-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== Level Complete screen ===== -->
+    <section id="levelCompleteScreen" class="overlay hidden">
+      <div class="glass-card complete-card">
+        <p class="eyebrow eyebrow-success">MISSION COMPLETE</p>
+        <h1 class="title-glow title-success">LEVEL<br><span id="completedLevelNum">1</span> CLEARED!</h1>
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat-label">SCORE EARNED</span>
+            <span id="levelScoreEarned" class="stat-value stat-value-success">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">WORDS CLEARED</span>
+            <span class="stat-value stat-value-success">15</span>
+          </div>
+        </div>
+        <button id="backToMapBtn" class="btn-primary btn-success">BACK TO MAP</button>
+      </div>
+    </section>
+
+    <!-- ===== Game over screen ===== -->
+    <section id="gameOverScreen" class="overlay hidden">
+      <div class="glass-card over-card">
+        <p class="eyebrow eyebrow-danger">RUN TERMINATED</p>
+        <h1 class="title-glow title-danger">GAME OVER</h1>
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat-label">SCORE</span>
+            <span id="finalScore" class="stat-value">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">CLEARED</span>
+            <span id="finalCleared" class="stat-value">0</span>
+          </div>
+        </div>
+        <div class="gameover-buttons">
+          <button id="retryBtn" class="btn-primary">RETRY LEVEL</button>
+          <button id="backToMapBtnGO" class="btn-secondary">BACK TO MAP</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Flash overlay for hit feedback -->
+    <div id="hitFlash" class="hit-flash"></div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+{% else %}
+  <!-- ===== LOGGED OUT: Google login gate ===== -->
+  <div class="login-box">
+    <p class="login-eyebrow">A VOCABULARY & GRAMMAR RUNNER</p>
+    <h1>🏃 WORD RUNNER</h1>
+    <p>Log in with Google to play and save your score.</p>
+    <a href="{{ url_for('login') }}" class="google-btn">
+      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
+      Login with Google
+    </a>
+  </div>
+{% endif %}
+
+</body>
+</html>
