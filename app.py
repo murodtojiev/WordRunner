@@ -22,10 +22,13 @@ from dotenv import load_dotenv
 # -----------------------------------------------------------------------
 # 1. Load secrets from .env
 # -----------------------------------------------------------------------
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
 
