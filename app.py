@@ -3,7 +3,7 @@ English Runner + Google OAuth login — v2 (Level Map Edition)
 -------------------------------------------------------------
 Features:
   - Google OAuth login with Authlib
-  - SQLite users table with current_level + total_score
+  - Strict PostgreSQL (Neon) connection
   - Duolingo-style 10-level map
   - 15 correct answers per level to advance
   - Leaderboard (Top 10 by total_score)
@@ -11,53 +11,45 @@ Features:
 """
 
 import os
-import sqlite3
 import random
 from functools import wraps
 
 from flask import Flask, render_template, redirect, url_for, session, request, jsonify
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 # -----------------------------------------------------------------------
 # 1. Load secrets from .env
 # -----------------------------------------------------------------------
-from werkzeug.middleware.proxy_fix import ProxyFix
-
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-try:
-    import psycopg2
-    from psycopg2.extras import RealDictCursor
-except ImportError:
-    psycopg2 = None
-
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-
 # -----------------------------------------------------------------------
-# 2. Database connection + schema + user helpers (PostgreSQL / SQLite)
+# 2. Database connection + schema + user helpers (Strictly PostgreSQL)
 # -----------------------------------------------------------------------
 def get_db():
-    if DATABASE_URL and psycopg2:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-        return conn, "postgres"
-    else:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn, "sqlite"
+    if not DATABASE_URL:
+        raise ValueError("XATOLIK: DATABASE_URL topilmadi! Render sozlamalarini tekshiring.")
+    
+    print("Neon bazasiga ulanmoqda...")
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    return conn, "postgres"
 
 
 def db_execute(conn, engine, query, params=()):
-    if engine == "postgres":
-        query = query.replace("?", "%s")
+    # PostgreSQL requires %s instead of ? for parameters
+    query = query.replace("?", "%s")
     cur = conn.cursor()
     cur.execute(query, params)
     return cur
@@ -65,37 +57,18 @@ def db_execute(conn, engine, query, params=()):
 
 def init_db():
     conn, engine = get_db()
-    if engine == "postgres":
-        db_execute(conn, engine, """
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                google_id VARCHAR(255) UNIQUE NOT NULL,
-                name VARCHAR(255),
-                email VARCHAR(255),
-                picture TEXT,
-                total_score INTEGER DEFAULT 0,
-                current_level INTEGER DEFAULT 1
-            )
-        """)
-        conn.commit()
-    else:
-        db_execute(conn, engine, """
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                google_id TEXT UNIQUE NOT NULL,
-                name TEXT,
-                email TEXT,
-                picture TEXT,
-                total_score INTEGER DEFAULT 0,
-                current_level INTEGER DEFAULT 1
-            )
-        """)
-        conn.commit()
-        try:
-            db_execute(conn, engine, "ALTER TABLE users ADD COLUMN current_level INTEGER DEFAULT 1")
-            conn.commit()
-        except Exception:
-            pass
+    db_execute(conn, engine, """
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            google_id VARCHAR(255) UNIQUE NOT NULL,
+            name VARCHAR(255),
+            email VARCHAR(255),
+            picture TEXT,
+            total_score INTEGER DEFAULT 0,
+            current_level INTEGER DEFAULT 1
+        )
+    """)
+    conn.commit()
     conn.close()
 
 
