@@ -30,66 +30,99 @@ app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    psycopg2 = None
+
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 
 # -----------------------------------------------------------------------
-# 2. SQLite: connection + schema + user helpers
+# 2. Database connection + schema + user helpers (PostgreSQL / SQLite)
 # -----------------------------------------------------------------------
-def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+def get_db():
+    if DATABASE_URL and psycopg2:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        return conn, "postgres"
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn, "sqlite"
+
+
+def db_execute(conn, engine, query, params=()):
+    if engine == "postgres":
+        query = query.replace("?", "%s")
+    cur = conn.cursor()
+    cur.execute(query, params)
+    return cur
 
 
 def init_db():
-    conn = get_db_connection()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            google_id TEXT UNIQUE NOT NULL,
-            name TEXT,
-            email TEXT,
-            picture TEXT,
-            total_score INTEGER DEFAULT 0,
-            current_level INTEGER DEFAULT 1
-        )
-    """)
-    conn.commit()
-
-    # Safe migration: add current_level if it doesn't exist yet
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN current_level INTEGER DEFAULT 1")
+    conn, engine = get_db()
+    if engine == "postgres":
+        db_execute(conn, engine, """
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                google_id VARCHAR(255) UNIQUE NOT NULL,
+                name VARCHAR(255),
+                email VARCHAR(255),
+                picture TEXT,
+                total_score INTEGER DEFAULT 0,
+                current_level INTEGER DEFAULT 1
+            )
+        """)
         conn.commit()
-    except sqlite3.OperationalError:
-        pass  # column already exists
-
+    else:
+        db_execute(conn, engine, """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                google_id TEXT UNIQUE NOT NULL,
+                name TEXT,
+                email TEXT,
+                picture TEXT,
+                total_score INTEGER DEFAULT 0,
+                current_level INTEGER DEFAULT 1
+            )
+        """)
+        conn.commit()
+        try:
+            db_execute(conn, engine, "ALTER TABLE users ADD COLUMN current_level INTEGER DEFAULT 1")
+            conn.commit()
+        except Exception:
+            pass
     conn.close()
 
 
 def get_or_create_user(google_id, name, email, picture):
-    conn = get_db_connection()
-    cur = conn.cursor()
+    conn, engine = get_db()
 
-    cur.execute("SELECT * FROM users WHERE google_id = ?", (google_id,))
+    cur = db_execute(conn, engine, "SELECT * FROM users WHERE google_id = ?", (google_id,))
     user = cur.fetchone()
 
     if user is None:
-        cur.execute(
+        db_execute(
+            conn, engine,
             """INSERT INTO users (google_id, name, email, picture, total_score, current_level)
                VALUES (?, ?, ?, ?, 0, 1)""",
             (google_id, name, email, picture),
         )
         conn.commit()
-        cur.execute("SELECT * FROM users WHERE google_id = ?", (google_id,))
+        cur = db_execute(conn, engine, "SELECT * FROM users WHERE google_id = ?", (google_id,))
         user = cur.fetchone()
     else:
-        cur.execute(
+        db_execute(
+            conn, engine,
             "UPDATE users SET name = ?, email = ?, picture = ? WHERE google_id = ?",
             (name, email, picture, google_id),
         )
         conn.commit()
-        cur.execute("SELECT * FROM users WHERE google_id = ?", (google_id,))
+        cur = db_execute(conn, engine, "SELECT * FROM users WHERE google_id = ?", (google_id,))
         user = cur.fetchone()
 
     conn.close()
@@ -97,9 +130,8 @@ def get_or_create_user(google_id, name, email, picture):
 
 
 def get_user_by_id(user_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    conn, engine = get_db()
+    cur = db_execute(conn, engine, "SELECT * FROM users WHERE id = ?", (user_id,))
     row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -107,30 +139,32 @@ def get_user_by_id(user_id):
 
 def add_to_user_score(user_id, points):
     """Adds `points` to the user's running total and returns the new total."""
-    conn = get_db_connection()
-    conn.execute(
+    conn, engine = get_db()
+    db_execute(
+        conn, engine,
         "UPDATE users SET total_score = total_score + ? WHERE id = ?",
         (points, user_id),
     )
     conn.commit()
-    cur = conn.execute("SELECT total_score FROM users WHERE id = ?", (user_id,))
+    cur = db_execute(conn, engine, "SELECT total_score FROM users WHERE id = ?", (user_id,))
     row = cur.fetchone()
     conn.close()
-    return row["total_score"] if row else None
+    return dict(row)["total_score"] if row else None
 
 
 def update_user_level(user_id, new_level):
     """Sets the user's current_level (only if new_level is higher)."""
-    conn = get_db_connection()
-    conn.execute(
-        "UPDATE users SET current_level = MAX(current_level, ?) WHERE id = ?",
-        (new_level, user_id),
+    conn, engine = get_db()
+    db_execute(
+        conn, engine,
+        "UPDATE users SET current_level = CASE WHEN ? > current_level THEN ? ELSE current_level END WHERE id = ?",
+        (new_level, new_level, user_id),
     )
     conn.commit()
-    cur = conn.execute("SELECT current_level FROM users WHERE id = ?", (user_id,))
+    cur = db_execute(conn, engine, "SELECT current_level FROM users WHERE id = ?", (user_id,))
     row = cur.fetchone()
     conn.close()
-    return row["current_level"] if row else None
+    return dict(row)["current_level"] if row else None
 
 
 init_db()
@@ -398,19 +432,21 @@ def level_up():
 @app.route("/api/leaderboard")
 @login_required
 def leaderboard():
-    conn = get_db_connection()
-    rows = conn.execute(
+    conn, engine = get_db()
+    cur = db_execute(conn, engine,
         "SELECT name, picture, total_score, current_level FROM users ORDER BY total_score DESC LIMIT 10"
-    ).fetchall()
+    )
+    rows = cur.fetchall()
     conn.close()
 
     result = []
     for row in rows:
+        r = dict(row)
         result.append({
-            "name": row["name"],
-            "picture": row["picture"],
-            "total_score": row["total_score"],
-            "current_level": row["current_level"],
+            "name": r["name"],
+            "picture": r["picture"],
+            "total_score": r["total_score"],
+            "current_level": r["current_level"],
         })
 
     return jsonify(result)
