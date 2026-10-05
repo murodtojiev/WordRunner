@@ -13,7 +13,7 @@
   // 1. DOM references (game)
   // =====================================================================
   const canvas        = document.getElementById('gameCanvas');
-  const ctx           = canvas.getContext('2d');
+  const ctx           = canvas ? canvas.getContext('2d') : null;
   const heartsEl      = document.getElementById('hearts');
   const scoreValueEl  = document.getElementById('scoreValue');
   const levelValueEl  = document.getElementById('levelValue');
@@ -35,6 +35,14 @@
   const levelScoreEarned    = document.getElementById('levelScoreEarned');
   const backToMapBtn        = document.getElementById('backToMapBtn');
 
+  // AI Chatbot elements
+  const toggleAiChat = document.getElementById('toggleAiChat');
+  const closeAiChat = document.getElementById('closeAiChat');
+  const aiChatWindow = document.getElementById('aiChatWindow');
+  const chatForm = document.getElementById('chatForm');
+  const chatInput = document.getElementById('chatInput');
+  const chatMessages = document.getElementById('chatMessages');
+
   // =====================================================================
   // 2. Constants
   // =====================================================================
@@ -51,7 +59,9 @@
   const RING_RADIUS     = 52;
   const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-  timerRingFill.style.strokeDasharray = RING_CIRCUMFERENCE.toFixed(1);
+  if (timerRingFill) {
+    timerRingFill.style.strokeDasharray = RING_CIRCUMFERENCE.toFixed(1);
+  }
 
   // =====================================================================
   // 3. State
@@ -75,10 +85,11 @@
   let levelScore = 0; // score earned this level
 
   // =====================================================================
-  // 4. Init: load leaderboard + attach level node listeners
+  // 4. Init: load map + leaderboard + AI chatbot
   // =====================================================================
-  initMap();
-  fetchLeaderboard();
+  if (levelPath) initMap();
+  if (leaderboardList) fetchLeaderboard();
+  initAiChatbot();
 
   function initMap() {
     const nodes = levelPath.querySelectorAll('.level-node');
@@ -92,19 +103,17 @@
   }
 
   function refreshMapUI() {
+    if (!levelPath) return;
     const nodes = levelPath.querySelectorAll('.level-node');
     nodes.forEach(node => {
       const level = parseInt(node.dataset.level, 10);
-      // Remove old classes
       node.classList.remove('completed', 'current', 'locked');
-      // Update circle content
       const circle = node.querySelector('.level-circle');
 
       if (level < currentLevel) {
         node.classList.add('completed');
         circle.innerHTML = `<span class="level-num">${level}</span>`;
         node.style.cursor = 'pointer';
-        // Re-attach click handler
         node.onclick = () => startLevel(level);
       } else if (level === currentLevel) {
         node.classList.add('current');
@@ -119,7 +128,6 @@
       }
     });
 
-    // Update user bar badge
     const badge = document.getElementById('userLevelBadge');
     if (badge) badge.textContent = '🎯 Lvl ' + currentLevel;
   }
@@ -128,17 +136,19 @@
   // 5. Leaderboard
   // =====================================================================
   function fetchLeaderboard() {
+    if (!leaderboardList) return;
     fetch('/api/leaderboard')
       .then(r => r.ok ? r.json() : [])
       .then(data => renderLeaderboard(data))
       .catch(() => {
-        leaderboardList.innerHTML = '<div class="leaderboard-loading">Could not load</div>';
+        leaderboardList.innerHTML = '<div class="leaderboard-loading">Could not load leaderboard</div>';
       });
   }
 
   function renderLeaderboard(data) {
+    if (!leaderboardList) return;
     if (!data.length) {
-      leaderboardList.innerHTML = '<div class="leaderboard-loading">No players yet</div>';
+      leaderboardList.innerHTML = '<div class="leaderboard-loading">No players yet. Be the first!</div>';
       return;
     }
     leaderboardList.innerHTML = '';
@@ -154,34 +164,112 @@
         <span class="lb-rank">${medal}</span>
         <img class="lb-avatar" src="${escapeAttr(user.picture || '')}" alt="">
         <span class="lb-name">${escapeHtml(user.name || 'Player')}</span>
-        <span class="lb-score">${user.total_score}</span>
+        <span class="lb-score">⭐ ${user.total_score}</span>
       `;
       leaderboardList.appendChild(row);
     });
   }
 
   // =====================================================================
-  // 6. Screen transitions
+  // 6. AI Chatbot Widget
+  // =====================================================================
+  function initAiChatbot() {
+    if (!toggleAiChat || !aiChatWindow) return;
+
+    toggleAiChat.addEventListener('click', () => {
+      aiChatWindow.classList.toggle('hidden');
+    });
+
+    if (closeAiChat) {
+      closeAiChat.addEventListener('click', () => {
+        aiChatWindow.classList.add('hidden');
+      });
+    }
+
+    // Handle suggestion pills
+    document.querySelectorAll('.suggestion-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.dataset.msg;
+        sendChatMessage(text);
+      });
+    });
+
+    if (chatForm) {
+      chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (text) {
+          sendChatMessage(text);
+          chatInput.value = '';
+        }
+      });
+    }
+  }
+
+  function sendChatMessage(userText) {
+    appendChatBubble(userText, 'user');
+    
+    // Hide suggestions after first message
+    const suggestions = document.getElementById('chatSuggestions');
+    if (suggestions) suggestions.style.display = 'none';
+
+    // Simulated AI response
+    setTimeout(() => {
+      const botResponse = getAiResponse(userText);
+      appendChatBubble(botResponse, 'bot');
+    }, 600);
+  }
+
+  function appendChatBubble(text, sender) {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${sender}-bubble`;
+    bubble.innerHTML = `<p>${escapeHtml(text)}</p>`;
+    chatMessages.appendChild(bubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function getAiResponse(text) {
+    const t = text.toLowerCase();
+    if (t.includes('present perfect') || t.includes('past simple')) {
+      return "💡 <strong>Present Perfect</strong> connects the past to the present (e.g. 'I have visited London'). <strong>Past Simple</strong> is used for completed actions at a specific past time (e.g. 'I visited London in 2020').";
+    }
+    if (t.includes('synonym') || t.includes('happy')) {
+      return "📚 Synonyms for <strong>'HAPPY'</strong>: 1. Joyful 2. Delighted 3. Content 4. Cheerful!";
+    }
+    if (t.includes('level') || t.includes('advance') || t.includes('unlock')) {
+      return "🎮 To advance to the next level, click any unlocked level node on the <strong>Learning Roadmap (/map)</strong> and answer 15 words correctly!";
+    }
+    return "Great question! Keep running levels on WordRunner to build your English vocabulary and grammar mastery step by step! 🚀";
+  }
+
+  // =====================================================================
+  // 7. Screen transitions
   // =====================================================================
   function showMap() {
-    gameStage.classList.add('hidden');
-    mapScreen.classList.remove('hidden');
+    if (gameStage) gameStage.classList.add('hidden');
+    if (mapScreen) mapScreen.classList.remove('hidden');
     document.body.style.overflow = '';
     running = false;
     refreshMapUI();
     fetchLeaderboard();
+
+    // Redirect to /map if on another page
+    if (window.location.pathname !== '/map') {
+      window.location.href = '/map';
+    }
   }
 
   function showGame() {
-    mapScreen.classList.add('hidden');
-    gameStage.classList.remove('hidden');
+    if (mapScreen) mapScreen.classList.add('hidden');
+    if (gameStage) gameStage.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
 
   // =====================================================================
-  // 7. Sizing
+  // 8. Sizing
   // =====================================================================
   function resize() {
+    if (!canvas || !ctx) return;
     const dpr = window.devicePixelRatio || 1;
     W = canvas.clientWidth;
     H = canvas.clientHeight;
@@ -196,7 +284,7 @@
   window.addEventListener('resize', resize);
 
   // =====================================================================
-  // 8. State setup
+  // 9. State setup
   // =====================================================================
   function resetState() {
     lives = MAX_LIVES;
@@ -224,6 +312,7 @@
   }
 
   function renderHearts() {
+    if (!heartsEl) return;
     heartsEl.innerHTML = '';
     for (let i = 0; i < MAX_LIVES; i++) {
       const span = document.createElement('span');
@@ -235,11 +324,11 @@
   }
 
   function updateHud() {
-    scoreValueEl.textContent = String(score).padStart(4, '0');
-    levelValueEl.textContent = String(playingLevel).padStart(2, '0');
+    if (scoreValueEl) scoreValueEl.textContent = String(score).padStart(4, '0');
+    if (levelValueEl) levelValueEl.textContent = String(playingLevel).padStart(2, '0');
     const pct = Math.min(100, (wordsCorrect / WORDS_PER_LEVEL) * 100);
-    progressFill.style.width = pct + '%';
-    progressText.textContent = `${wordsCorrect} / ${WORDS_PER_LEVEL}`;
+    if (progressFill) progressFill.style.width = pct + '%';
+    if (progressText) progressText.textContent = `${wordsCorrect} / ${WORDS_PER_LEVEL}`;
   }
 
   function fillObstacleQueue() {
@@ -252,7 +341,7 @@
   }
 
   // =====================================================================
-  // 9. Main loop
+  // 10. Main loop
   // =====================================================================
   function loop(t) {
     if (!running) return;
@@ -265,6 +354,7 @@
   }
 
   function update(dt) {
+    if (!player) return;
     if (player.state === 'running') {
       player.runTime += dt;
       groundOffset += dt;
@@ -286,7 +376,7 @@
   }
 
   // =====================================================================
-  // 10. Obstacle + quiz flow
+  // 11. Obstacle + quiz flow
   // =====================================================================
   function triggerObstacle(obs) {
     player.state = 'stopped';
@@ -319,10 +409,12 @@
       btn.addEventListener('click', () => selectAnswer(i));
       optionsGrid.appendChild(btn);
     });
-    timerRingFill.classList.remove('warn', 'danger');
-    timerRingFill.style.strokeDashoffset = '0';
-    timerNumber.textContent = String(ANSWER_TIME);
-    questionPanel.classList.remove('hidden');
+    if (timerRingFill) {
+      timerRingFill.classList.remove('warn', 'danger');
+      timerRingFill.style.strokeDashoffset = '0';
+    }
+    if (timerNumber) timerNumber.textContent = String(ANSWER_TIME);
+    if (questionPanel) questionPanel.classList.remove('hidden');
   }
 
   function escapeHtml(str) {
@@ -350,10 +442,12 @@
     const remaining = Math.max(0, (timerDeadline - now) / 1000);
     const ratio = remaining / ANSWER_TIME;
     const offset = RING_CIRCUMFERENCE * (1 - ratio);
-    timerRingFill.style.strokeDashoffset = offset.toFixed(1);
-    timerNumber.textContent = String(Math.ceil(remaining));
-    timerRingFill.classList.toggle('warn', ratio <= 0.5 && ratio > 0.2);
-    timerRingFill.classList.toggle('danger', ratio <= 0.2);
+    if (timerRingFill) {
+      timerRingFill.style.strokeDashoffset = offset.toFixed(1);
+      timerRingFill.classList.toggle('warn', ratio <= 0.5 && ratio > 0.2);
+      timerRingFill.classList.toggle('danger', ratio <= 0.2);
+    }
+    if (timerNumber) timerNumber.textContent = String(Math.ceil(remaining));
 
     if (remaining <= 0) {
       handleTimeout();
@@ -379,7 +473,9 @@
   }
 
   function lockOptionButtons() {
-    optionsGrid.querySelectorAll('.option-btn').forEach(b => { b.disabled = true; });
+    if (optionsGrid) {
+      optionsGrid.querySelectorAll('.option-btn').forEach(b => { b.disabled = true; });
+    }
   }
 
   function checkAnswer(index) {
@@ -391,7 +487,7 @@
   }
 
   function handleAnswerResult(selectedIndex, data) {
-    const buttons = optionsGrid.querySelectorAll('.option-btn');
+    const buttons = optionsGrid ? optionsGrid.querySelectorAll('.option-btn') : [];
     if (buttons[data.correctIndex]) buttons[data.correctIndex].classList.add('correct');
     if (selectedIndex >= 0 && selectedIndex !== data.correctIndex && buttons[selectedIndex]) {
       buttons[selectedIndex].classList.add('wrong');
@@ -400,7 +496,7 @@
   }
 
   function resolveAnswer(isCorrect) {
-    questionPanel.classList.add('hidden');
+    if (questionPanel) questionPanel.classList.add('hidden');
     if (isCorrect) {
       cleared += 1;
       score += 100;
@@ -425,7 +521,6 @@
     }
     activeObstacle = null;
 
-    // Check level completion
     if (wordsCorrect >= WORDS_PER_LEVEL) {
       levelComplete();
       return;
@@ -454,21 +549,21 @@
   }
 
   function flashHit() {
-    hitFlash.classList.add('active');
-    setTimeout(() => hitFlash.classList.remove('active'), 160);
+    if (hitFlash) {
+      hitFlash.classList.add('active');
+      setTimeout(() => hitFlash.classList.remove('active'), 160);
+    }
   }
 
   // =====================================================================
-  // 11. Level complete
+  // 12. Level complete & Game over
   // =====================================================================
   function levelComplete() {
     running = false;
     player.state = 'stopped';
 
-    // Save the run score
     saveScore(levelScore);
 
-    // Tell backend to advance level
     fetch('/api/level-up', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -484,21 +579,17 @@
       })
       .catch(() => {});
 
-    // Show level complete UI
-    completedLevelNum.textContent = String(playingLevel);
-    levelScoreEarned.textContent = String(levelScore);
-    levelCompleteScreen.classList.remove('hidden');
+    if (completedLevelNum) completedLevelNum.textContent = String(playingLevel);
+    if (levelScoreEarned) levelScoreEarned.textContent = String(levelScore);
+    if (levelCompleteScreen) levelCompleteScreen.classList.remove('hidden');
   }
 
-  // =====================================================================
-  // 12. Game over
-  // =====================================================================
   function gameOver() {
     running = false;
     player.state = 'dead';
-    finalScoreEl.textContent = String(levelScore);
-    finalClearedEl.textContent = String(wordsCorrect);
-    gameOverScreen.classList.remove('hidden');
+    if (finalScoreEl) finalScoreEl.textContent = String(levelScore);
+    if (finalClearedEl) finalClearedEl.textContent = String(wordsCorrect);
+    if (gameOverScreen) gameOverScreen.classList.remove('hidden');
     if (levelScore > 0) saveScore(levelScore);
   }
 
@@ -519,9 +610,10 @@
   }
 
   // =====================================================================
-  // 13. Rendering
+  // 13. Rendering (Canvas 2D)
   // =====================================================================
   function render() {
+    if (!ctx) return;
     ctx.clearRect(0, 0, W, H);
 
     let shakeX = 0, shakeY = 0;
@@ -700,8 +792,8 @@
   function startLevel(level) {
     playingLevel = level;
     showGame();
-    gameOverScreen.classList.add('hidden');
-    levelCompleteScreen.classList.add('hidden');
+    if (gameOverScreen) gameOverScreen.classList.add('hidden');
+    if (levelCompleteScreen) levelCompleteScreen.classList.add('hidden');
     resize();
     resetState();
     running = true;
@@ -709,30 +801,31 @@
     requestAnimationFrame(loop);
   }
 
-  // Make startLevel available globally (for inline onclick in template)
   window.startLevel = startLevel;
 
-  // Retry = restart same level
-  retryBtn.addEventListener('click', () => {
-    gameOverScreen.classList.add('hidden');
-    startLevel(playingLevel);
-  });
+  if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+      if (gameOverScreen) gameOverScreen.classList.add('hidden');
+      startLevel(playingLevel);
+    });
+  }
 
-  // Back to map from game over
-  backToMapBtnGO.addEventListener('click', () => {
-    gameOverScreen.classList.add('hidden');
-    showMap();
-  });
+  if (backToMapBtnGO) {
+    backToMapBtnGO.addEventListener('click', () => {
+      if (gameOverScreen) gameOverScreen.classList.add('hidden');
+      showMap();
+    });
+  }
 
-  // Back to map from level complete
-  backToMapBtn.addEventListener('click', () => {
-    levelCompleteScreen.classList.add('hidden');
-    showMap();
-  });
+  if (backToMapBtn) {
+    backToMapBtn.addEventListener('click', () => {
+      if (levelCompleteScreen) levelCompleteScreen.classList.add('hidden');
+      showMap();
+    });
+  }
 
-  // Keyboard shortcuts
   window.addEventListener('keydown', (e) => {
-    if (!questionPanel.classList.contains('hidden') && /^[1-4]$/.test(e.key)) {
+    if (questionPanel && !questionPanel.classList.contains('hidden') && /^[1-4]$/.test(e.key)) {
       selectAnswer(Number(e.key) - 1);
       return;
     }

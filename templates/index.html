@@ -3,174 +3,340 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Word Runner — Vocabulary & Grammar Game</title>
-<meta name="description" content="Word Runner: A cyberpunk vocabulary and grammar runner game. Master English one level at a time!">
+<title>WordRunner — Next-Gen Gamified English Platform</title>
+<meta name="description" content="Master English vocabulary and grammar through an interactive 10-level runner game and AI language tutor.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body{% if user %} data-current-level="{{ user.current_level }}" data-total-score="{{ user.total_score }}"{% endif %}>
 
-{% if user %}
-  <!-- ===== LOGGED IN: user bar + game ===== -->
-  <div class="user-bar" id="userBar">
-    <img src="{{ user.picture }}" alt="Profile picture" class="avatar">
-    <span class="user-name">{{ user.name }}</span>
-    <span id="userTotalScore" class="user-score">⭐ {{ user.total_score }}</span>
-    <span id="userLevelBadge" class="user-level">🎯 Lvl {{ user.current_level }}</span>
-    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
-  </div>
+  <!-- ===== TOP NAVIGATION BAR ===== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-icon">🏃</span>
+        <span class="brand-text">WORD<span class="brand-accent">RUNNER</span></span>
+      </a>
 
-  <!-- ===== MAP SCREEN (default view) ===== -->
-  <section id="mapScreen" class="map-screen">
-    <div class="map-layout">
+      <div class="nav-menu">
+        <a href="/" class="nav-link {% if active_page == 'home' %}active{% endif %}">Home</a>
+        {% if user %}
+          <a href="/map" class="nav-link {% if active_page == 'map' %}active{% endif %}">Learn / Map</a>
+          <a href="/leaderboard" class="nav-link {% if active_page == 'leaderboard' %}active{% endif %}">Leaderboard</a>
+        {% else %}
+          <a href="/login" class="nav-link">Learn / Map</a>
+          <a href="/login" class="nav-link">Leaderboard</a>
+        {% endif %}
+      </div>
 
-      <!-- Left: Level Path -->
-      <div class="map-path-container">
-        <div class="map-header">
-          <p class="map-eyebrow">A VOCABULARY & GRAMMAR RUNNER</p>
-          <h1 class="map-title">WORD<br>RUNNER</h1>
-          <p class="map-subtitle">Complete 15 words per level to advance</p>
-        </div>
-
-        <div class="level-path" id="levelPath">
-          {% for level in range(10, 0, -1) %}
-          <div class="level-node {% if level < user.current_level %}completed{% elif level == user.current_level %}current{% else %}locked{% endif %}"
-               data-level="{{ level }}">
-            <div class="level-circle">
-              {% if level <= user.current_level %}
-                <span class="level-num">{{ level }}</span>
-              {% else %}
-                <span class="level-lock">🔒</span>
-              {% endif %}
-            </div>
-            <span class="level-label">Level {{ level }}</span>
+      <div class="nav-user-area">
+        {% if user %}
+          <div class="user-stats-pill">
+            <span id="userTotalScore" class="stat-badge score-badge">⭐ {{ user.total_score }}</span>
+            <span id="userLevelBadge" class="stat-badge level-badge">🎯 Lvl {{ user.current_level }}</span>
           </div>
-          {% endfor %}
-        </div>
+          <div class="user-profile-menu">
+            <img src="{{ user.picture }}" alt="{{ user.name }}" class="user-avatar">
+            <span class="user-name-text">{{ user.name }}</span>
+            <a href="{{ url_for('logout') }}" class="btn-nav-logout" title="Logout">Logout</a>
+          </div>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn-nav-login">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
+            Start Learning
+          </a>
+        {% endif %}
       </div>
-
-      <!-- Right: Leaderboard -->
-      <div class="leaderboard-panel" id="leaderboardPanel">
-        <h2 class="leaderboard-title">🏆 TOP 10</h2>
-        <div class="leaderboard-list" id="leaderboardList">
-          <div class="leaderboard-loading">Loading...</div>
-        </div>
-      </div>
-
     </div>
-  </section>
+  </nav>
 
-  <!-- ===== GAME STAGE (hidden by default) ===== -->
-  <div class="stage hidden" id="gameStage">
+  <!-- ===== MAIN CONTENT CONTAINER ===== -->
+  <main class="main-content">
 
-    <!-- ===== HUD ===== -->
-    <header class="hud" aria-hidden="false">
-      <div class="hud-block hud-lives">
-        <span class="hud-label">HP</span>
-        <div id="hearts" class="hearts" aria-live="polite"></div>
-      </div>
-
-      <div class="hud-block hud-progress">
-        <span class="hud-label">PROGRESS</span>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" id="progressBarFill"></div>
-          <span class="progress-text" id="progressText">0 / 15</span>
+    <!-- ===== 1. LANDING / HOME PAGE ===== -->
+    {% if active_page == 'home' %}
+    <section class="hero-section">
+      <div class="hero-container">
+        <div class="hero-badge">
+          <span class="sparkle">✨</span> REVOLUTIONARY ED-TECH PLATFORM
         </div>
-      </div>
+        <h1 class="hero-title">
+          Master English Through <span class="gradient-text">Gamified Play</span>
+        </h1>
+        <p class="hero-description">
+          WordRunner combines high-speed 2D runner mechanics with real-time vocabulary and grammar challenges. Level up through an interactive roadmap, climb global rankings, and practice anytime with your personal AI English tutor.
+        </p>
 
-      <div class="hud-block hud-level">
-        <span class="hud-label">LEVEL</span>
-        <span id="levelValue" class="hud-value">01</span>
-      </div>
-
-      <div class="hud-block hud-score">
-        <span class="hud-label">SCORE</span>
-        <span id="scoreValue" class="hud-value">0000</span>
-      </div>
-    </header>
-
-    <!-- ===== Game canvas ===== -->
-    <canvas id="gameCanvas"></canvas>
-
-    <!-- ===== Question / obstacle panel ===== -->
-    <section id="questionPanel" class="question-panel hidden" aria-live="assertive">
-      <div class="timer-ring-wrap">
-        <svg class="timer-ring" viewBox="0 0 120 120">
-          <circle class="timer-ring-track" cx="60" cy="60" r="52"></circle>
-          <circle id="timerRingFill" class="timer-ring-fill" cx="60" cy="60" r="52"></circle>
-        </svg>
-        <span id="timerNumber" class="timer-number">15</span>
-      </div>
-
-      <div class="question-body">
-        <p class="question-eyebrow">OBSTACLE AHEAD — ANSWER TO JUMP</p>
-        <h2 id="questionText" class="question-text">Loading…</h2>
-        <div id="optionsGrid" class="options-grid"></div>
-      </div>
-    </section>
-
-    <!-- ===== Level Complete screen ===== -->
-    <section id="levelCompleteScreen" class="overlay hidden">
-      <div class="glass-card complete-card">
-        <p class="eyebrow eyebrow-success">MISSION COMPLETE</p>
-        <h1 class="title-glow title-success">LEVEL<br><span id="completedLevelNum">1</span> CLEARED!</h1>
-        <div class="stats-row">
-          <div class="stat">
-            <span class="stat-label">SCORE EARNED</span>
-            <span id="levelScoreEarned" class="stat-value stat-value-success">0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">WORDS CLEARED</span>
-            <span class="stat-value stat-value-success">15</span>
-          </div>
+        <div class="hero-cta-group">
+          {% if user %}
+            <a href="/map" class="btn-hero-primary">
+              <span>Continue Learning</span>
+              <span class="btn-arrow">→</span>
+            </a>
+            <a href="/leaderboard" class="btn-hero-secondary">
+              <span>🏆 View Leaderboard</span>
+            </a>
+          {% else %}
+            <a href="{{ url_for('login') }}" class="btn-hero-primary">
+              <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="btn-g-logo">
+              <span>Start Learning Free with Google</span>
+              <span class="btn-arrow">→</span>
+            </a>
+          {% endif %}
         </div>
-        <button id="backToMapBtn" class="btn-primary btn-success">BACK TO MAP</button>
-      </div>
-    </section>
 
-    <!-- ===== Game over screen ===== -->
-    <section id="gameOverScreen" class="overlay hidden">
-      <div class="glass-card over-card">
-        <p class="eyebrow eyebrow-danger">RUN TERMINATED</p>
-        <h1 class="title-glow title-danger">GAME OVER</h1>
-        <div class="stats-row">
-          <div class="stat">
-            <span class="stat-label">SCORE</span>
-            <span id="finalScore" class="stat-value">0</span>
+        <!-- Metrics bar -->
+        <div class="hero-metrics">
+          <div class="metric-card">
+            <span class="metric-number">10</span>
+            <span class="metric-label">Progressive Levels</span>
           </div>
-          <div class="stat">
-            <span class="stat-label">CLEARED</span>
-            <span id="finalCleared" class="stat-value">0</span>
+          <div class="metric-card">
+            <span class="metric-number">60+</span>
+            <span class="metric-label">Core Vocabulary Skills</span>
           </div>
-        </div>
-        <div class="gameover-buttons">
-          <button id="retryBtn" class="btn-primary">RETRY LEVEL</button>
-          <button id="backToMapBtnGO" class="btn-secondary">BACK TO MAP</button>
+          <div class="metric-card">
+            <span class="metric-number">15s</span>
+            <span class="metric-label">Quick-Fire Rounds</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-number">24/7</span>
+            <span class="metric-label">AI Tutor Assistance</span>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Flash overlay for hit feedback -->
-    <div id="hitFlash" class="hit-flash"></div>
+    <!-- FEATURES SECTION -->
+    <section class="features-section">
+      <div class="features-container">
+        <div class="section-header">
+          <span class="section-eyebrow">WHY WORDRUNNER?</span>
+          <h2 class="section-title">Designed for Fast, Addictive Learning</h2>
+        </div>
 
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon icon-roadmap">🗺️</div>
+            <h3 class="feature-title">10-Level Progressive Roadmap</h3>
+            <p class="feature-desc">A structured, Duolingo-style roadmap designed to take you from foundational grammar to advanced vocabulary step by step.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-runner">⚡</div>
+            <h3 class="feature-title">Gamified Runner Gameplay</h3>
+            <p class="feature-desc">Run, jump, and overcome obstacles by making quick decisions under 15-second time pressure for instant recall memory.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-leaderboard">🏆</div>
+            <h3 class="feature-title">Global Leaderboard & Ranks</h3>
+            <p class="feature-desc">Compete with learners around the world. Earn points for every correct answer and claim your spot among the Top 10.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon icon-ai">🤖</div>
+            <h3 class="feature-title">AI English Language Tutor</h3>
+            <p class="feature-desc">Get instant grammar explanations, vocabulary definitions, and personalized practice tips anytime with your AI assistant.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== 2. LEVEL MAP VIEW ===== -->
+    {% if active_page == 'map' %}
+    {% if user %}
+    <section id="mapScreen" class="map-section-view">
+      <div class="map-view-container">
+        <div class="map-view-header">
+          <span class="map-eyebrow">DUOLINGO-STYLE PROGRESSION</span>
+          <h1 class="map-view-title">YOUR LEARNING ROADMAP</h1>
+          <p class="map-view-subtitle">Answer 15 words correctly in each level to unlock the next challenge.</p>
+        </div>
+
+        <div class="map-path-card">
+          <div class="level-path" id="levelPath">
+            {% for level in range(10, 0, -1) %}
+            <div class="level-node {% if level < user.current_level %}completed{% elif level == user.current_level %}current{% else %}locked{% endif %}"
+                 data-level="{{ level }}">
+              <div class="level-circle">
+                {% if level <= user.current_level %}
+                  <span class="level-num">{{ level }}</span>
+                {% else %}
+                  <span class="level-lock">🔒</span>
+                {% endif %}
+              </div>
+              <span class="level-label">Level {{ level }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+    {% endif %}
+
+    <!-- ===== 3. LEADERBOARD VIEW ===== -->
+    {% if active_page == 'leaderboard' %}
+    {% if user %}
+    <section id="leaderboardScreen" class="leaderboard-section-view">
+      <div class="leaderboard-view-container">
+        <div class="leaderboard-header">
+          <span class="lb-eyebrow">GLOBAL RANKINGS</span>
+          <h1 class="lb-title">🏆 TOP 10 LEARNERS</h1>
+          <p class="lb-subtitle">Earn score by completing 15-word levels and climb to the top of the leaderboard!</p>
+        </div>
+
+        <div class="leaderboard-card">
+          <div class="leaderboard-list" id="leaderboardList">
+            <div class="leaderboard-loading">Loading top learners...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+    {% endif %}
+
+    <!-- ===== 4. HTML5 CANVAS GAME STAGE (Hidden until level is clicked) ===== -->
+    {% if user %}
+    <div class="stage hidden" id="gameStage">
+      <!-- HUD -->
+      <header class="hud">
+        <div class="hud-block hud-lives">
+          <span class="hud-label">HP</span>
+          <div id="hearts" class="hearts"></div>
+        </div>
+
+        <div class="hud-block hud-progress">
+          <span class="hud-label">PROGRESS</span>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progressBarFill"></div>
+            <span class="progress-text" id="progressText">0 / 15</span>
+          </div>
+        </div>
+
+        <div class="hud-block hud-level">
+          <span class="hud-label">LEVEL</span>
+          <span id="levelValue" class="hud-value">01</span>
+        </div>
+
+        <div class="hud-block hud-score">
+          <span class="hud-label">SCORE</span>
+          <span id="scoreValue" class="hud-value">0000</span>
+        </div>
+      </header>
+
+      <!-- Game canvas -->
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- Question / obstacle panel -->
+      <section id="questionPanel" class="question-panel hidden">
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring" viewBox="0 0 120 120">
+            <circle class="timer-ring-track" cx="60" cy="60" r="52"></circle>
+            <circle id="timerRingFill" class="timer-ring-fill" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <span id="timerNumber" class="timer-number">15</span>
+        </div>
+
+        <div class="question-body">
+          <p class="question-eyebrow">OBSTACLE AHEAD — ANSWER TO JUMP</p>
+          <h2 id="questionText" class="question-text">Loading…</h2>
+          <div id="optionsGrid" class="options-grid"></div>
+        </div>
+      </section>
+
+      <!-- Level Complete screen -->
+      <section id="levelCompleteScreen" class="overlay hidden">
+        <div class="glass-card complete-card">
+          <p class="eyebrow eyebrow-success">MISSION COMPLETE</p>
+          <h1 class="title-glow title-success">LEVEL <span id="completedLevelNum">1</span> CLEARED!</h1>
+          <div class="stats-row">
+            <div class="stat">
+              <span class="stat-label">SCORE EARNED</span>
+              <span id="levelScoreEarned" class="stat-value stat-value-success">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">WORDS CLEARED</span>
+              <span class="stat-value stat-value-success">15</span>
+            </div>
+          </div>
+          <button id="backToMapBtn" class="btn-primary btn-success">BACK TO MAP</button>
+        </div>
+      </section>
+
+      <!-- Game over screen -->
+      <section id="gameOverScreen" class="overlay hidden">
+        <div class="glass-card over-card">
+          <p class="eyebrow eyebrow-danger">RUN TERMINATED</p>
+          <h1 class="title-glow title-danger">GAME OVER</h1>
+          <div class="stats-row">
+            <div class="stat">
+              <span class="stat-label">SCORE</span>
+              <span id="finalScore" class="stat-value">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">CLEARED</span>
+              <span id="finalCleared" class="stat-value">0</span>
+            </div>
+          </div>
+          <div class="gameover-buttons">
+            <button id="retryBtn" class="btn-primary">RETRY LEVEL</button>
+            <button id="backToMapBtnGO" class="btn-secondary">BACK TO MAP</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Flash overlay for hit feedback -->
+      <div id="hitFlash" class="hit-flash"></div>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- ===== 5. FLOATING AI CHATBOT WIDGET ===== -->
+  <div class="ai-chatbot-widget">
+    <!-- Chat Window Modal -->
+    <div id="aiChatWindow" class="ai-chat-window hidden">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="bot-avatar">🤖</div>
+          <div>
+            <h3 class="chat-bot-name">AI English Tutor</h3>
+            <span class="chat-status"><span class="status-dot"></span> Online</span>
+          </div>
+        </div>
+        <button id="closeAiChat" class="btn-close-chat" aria-label="Close Chat">&times;</button>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble bot-bubble">
+          <p>Hi! 👋 I'm your <strong>AI English Tutor</strong>. How can I help you practice your vocabulary or grammar today?</p>
+        </div>
+
+        <div class="chat-suggestions" id="chatSuggestions">
+          <button class="suggestion-pill" data-msg="Explain Present Perfect vs Past Simple">💡 Present Perfect vs Past Simple</button>
+          <button class="suggestion-pill" data-msg="Give me 3 synonyms for 'Happy'">📚 Synonyms for 'Happy'</button>
+          <button class="suggestion-pill" data-msg="How do I advance to Level 2?">🎮 How to level up?</button>
+        </div>
+      </div>
+
+      <form class="chat-input-form" id="chatForm">
+        <input type="text" id="chatInput" placeholder="Ask your AI tutor a question..." autocomplete="off">
+        <button type="submit" class="btn-send-chat" aria-label="Send">➡️</button>
+      </form>
+    </div>
+
+    <!-- Floating Chat Toggle Trigger Button -->
+    <button id="toggleAiChat" class="ai-chat-trigger" title="Ask AI English Tutor">
+      <span class="trigger-icon">💬</span>
+      <span class="trigger-label">AI Tutor</span>
+    </button>
   </div>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
-
-{% else %}
-  <!-- ===== LOGGED OUT: Google login gate ===== -->
-  <div class="login-box">
-    <p class="login-eyebrow">A VOCABULARY & GRAMMAR RUNNER</p>
-    <h1>🏃 WORD RUNNER</h1>
-    <p>Log in with Google to play and save your score.</p>
-    <a href="{{ url_for('login') }}" class="google-btn">
-      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
-      Login with Google
-    </a>
-  </div>
-{% endif %}
-
 </body>
 </html>

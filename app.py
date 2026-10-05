@@ -222,7 +222,33 @@ def index():
             session["user"]["total_score"] = fresh["total_score"]
             session["user"]["current_level"] = fresh["current_level"]
             user = session["user"]
-    return render_template("index.html", user=user)
+    return render_template("index.html", user=user, active_page="home")
+
+
+@app.route("/map")
+def map_page():
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("login"))
+    fresh = get_user_by_id(user["id"])
+    if fresh:
+        session["user"]["total_score"] = fresh["total_score"]
+        session["user"]["current_level"] = fresh["current_level"]
+        user = session["user"]
+    return render_template("index.html", user=user, active_page="map")
+
+
+@app.route("/leaderboard")
+def leaderboard_page():
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("login"))
+    fresh = get_user_by_id(user["id"])
+    if fresh:
+        session["user"]["total_score"] = fresh["total_score"]
+        session["user"]["current_level"] = fresh["current_level"]
+        user = session["user"]
+    return render_template("index.html", user=user, active_page="leaderboard")
 
 
 # -----------------------------------------------------------------------
