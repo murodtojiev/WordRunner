@@ -52,6 +52,33 @@
     </div>
   </nav>
 
+  <!-- ===== MOBILE BOTTOM NAVIGATION BAR ===== -->
+  <nav class="mobile-bottom-nav">
+    <a href="/" class="mobile-nav-item {% if active_page == 'home' %}active{% endif %}">
+      <span class="mobile-nav-icon">🏠</span>
+      <span class="mobile-nav-label">Home</span>
+    </a>
+    {% if user %}
+      <a href="/map" class="mobile-nav-item {% if active_page == 'map' %}active{% endif %}">
+        <span class="mobile-nav-icon">🗺️</span>
+        <span class="mobile-nav-label">Map</span>
+      </a>
+      <a href="/leaderboard" class="mobile-nav-item {% if active_page == 'leaderboard' %}active{% endif %}">
+        <span class="mobile-nav-icon">🏆</span>
+        <span class="mobile-nav-label">Leaderboard</span>
+      </a>
+    {% else %}
+      <a href="/login" class="mobile-nav-item">
+        <span class="mobile-nav-icon">🗺️</span>
+        <span class="mobile-nav-label">Map</span>
+      </a>
+      <a href="/login" class="mobile-nav-item">
+        <span class="mobile-nav-icon">🏆</span>
+        <span class="mobile-nav-label">Leaderboard</span>
+      </a>
+    {% endif %}
+  </nav>
+
   <!-- ===== MAIN CONTENT CONTAINER ===== -->
   <main class="main-content">
 

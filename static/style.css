@@ -1272,12 +1272,491 @@ body {
 }
 
 /* =====================================================================
-   8. RESPONSIVE BREAKPOINTS
+   8. RESPONSIVE & MOBILE DESIGN SYSTEM
    ===================================================================== */
-@media (max-width: 768px) {
-  .hero-title { font-size: 38px; }
-  .hero-metrics { grid-template-columns: repeat(2, 1fr); }
+
+/* Desktop / Default Mobile Nav display rules */
+.mobile-bottom-nav {
+  display: none;
+}
+
+/* Touch feedback for tactile feel on mobile devices */
+@media (hover: none) and (pointer: coarse) {
+  button, .btn-hero-primary, .btn-hero-secondary, .level-node, .mobile-nav-item, .option-btn {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active, .btn-hero-primary:active, .btn-hero-secondary:active, .option-btn:active {
+    transform: scale(0.97) !important;
+  }
+}
+
+/* ---- Tablet (max-width: 1024px) ---- */
+@media (max-width: 1024px) {
+  .nav-container { padding: 12px 20px; }
+  .hero-title { font-size: 40px; }
+  .hero-metrics { grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .features-grid { grid-template-columns: 1fr; }
-  .nav-menu { display: none; }
-  .ai-chat-window { width: calc(100vw - 32px); right: -12px; }
+  .section-title { font-size: 30px; }
+}
+
+/* ---- Mobile Devices (max-width: 768px) ---- */
+@media (max-width: 768px) {
+
+  /* --- Global Mobile Layout Adjustments --- */
+  body {
+    overflow-x: hidden;
+  }
+  
+  .main-content {
+    padding-bottom: 70px; /* Space for bottom navigation bar */
+  }
+
+  /* --- Top Navigation Bar --- */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    backdrop-filter: blur(16px);
+  }
+
+  .nav-container {
+    padding: 10px 14px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Hide desktop menu on mobile (handled by bottom nav) */
+  .nav-menu {
+    display: none !important;
+  }
+
+  .brand-text {
+    font-size: 18px;
+    letter-spacing: -0.3px;
+  }
+
+  .brand-icon {
+    font-size: 20px;
+  }
+
+  .nav-user-area {
+    gap: 8px;
+  }
+
+  .user-stats-pill {
+    gap: 4px;
+    padding: 3px 8px;
+  }
+
+  .stat-badge {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+
+  .user-profile-menu {
+    padding: 3px 6px;
+    gap: 4px;
+  }
+
+  .user-avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .user-name-text {
+    display: none; /* Hide username string to save header space */
+  }
+
+  .btn-nav-logout {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .btn-nav-login {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 99px;
+  }
+
+  .btn-nav-login img {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* --- Mobile Bottom Navigation Bar --- */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: rgba(10, 14, 26, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--text-mid);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    flex: 1;
+    text-align: center;
+  }
+
+  .mobile-nav-icon {
+    font-size: 18px;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--cyan);
+  }
+
+  .mobile-nav-item.active .mobile-nav-icon {
+    transform: translateY(-2px) scale(1.1);
+  }
+
+  /* --- Landing Page / Hero Section --- */
+  .hero-section {
+    padding: 28px 16px 24px;
+  }
+
+  .hero-badge {
+    font-size: 10px;
+    padding: 5px 10px;
+    margin-bottom: 14px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 14px;
+  }
+
+  .hero-description {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    color: var(--text-mid);
+  }
+
+  .hero-cta-group {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 28px;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 18px;
+    font-size: 15px;
+    border-radius: 14px;
+    box-sizing: border-box;
+  }
+
+  .hero-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .metric-card {
+    padding: 14px 10px;
+    border-radius: var(--radius-md);
+  }
+
+  .metric-number { font-size: 22px; }
+  .metric-label { font-size: 11px; }
+
+  /* --- Features Section --- */
+  .features-section {
+    padding: 28px 16px 40px;
+  }
+
+  .section-header { margin-bottom: 20px; }
+  .section-eyebrow { font-size: 11px; }
+  .section-title { font-size: 24px; }
+  .section-subtitle { font-size: 13px; }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .feature-card {
+    padding: 18px 14px;
+    border-radius: var(--radius-md);
+  }
+
+  .feature-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .feature-title { font-size: 17px; }
+  .feature-desc { font-size: 13px; }
+
+  /* --- Level Map View (/map) --- */
+  .map-section-view {
+    padding: 20px 12px 80px;
+  }
+
+  .map-view-title { font-size: 26px; }
+  .map-view-subtitle { font-size: 13px; margin-bottom: 20px; }
+
+  .map-path-card {
+    padding: 24px 10px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  /* Moderate zigzag for narrow phone screens to prevent overflow */
+  .level-node:nth-child(odd)  { transform: translateX(-16px); }
+  .level-node:nth-child(even) { transform: translateX(16px); }
+
+  .level-circle {
+    width: 56px;
+    height: 56px;
+    font-size: 18px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  }
+
+  .level-label {
+    font-size: 11px;
+  }
+
+  /* --- Leaderboard View (/leaderboard) --- */
+  .leaderboard-section-view {
+    padding: 20px 12px 80px;
+  }
+
+  .lb-title { font-size: 24px; }
+  .lb-subtitle { font-size: 13px; margin-bottom: 20px; }
+
+  .leaderboard-card {
+    padding: 12px 8px;
+    border-radius: var(--radius-lg);
+  }
+
+  .lb-row {
+    padding: 10px 10px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .lb-rank {
+    font-size: 16px;
+    width: 24px;
+  }
+
+  .lb-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .lb-name {
+    font-size: 13px;
+  }
+
+  .lb-score {
+    font-size: 14px;
+  }
+
+  /* --- AI Chatbot Widget on Mobile --- */
+  .ai-chatbot-widget {
+    bottom: 74px; /* Positioned right above bottom navigation bar */
+    right: 14px;
+    z-index: 1050;
+  }
+
+  .ai-chat-trigger {
+    padding: 12px;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(0, 240, 255, 0.4);
+  }
+
+  .trigger-icon { font-size: 20px; }
+  .trigger-label { display: none; }
+
+  .ai-chat-window {
+    position: fixed;
+    top: 12px;
+    bottom: 74px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    height: auto;
+    max-height: none;
+    border-radius: 20px;
+    z-index: 1100;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  }
+
+  .chat-messages {
+    padding: 12px;
+  }
+
+  .chat-bubble {
+    max-width: 88%;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  .suggestion-pill {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  /* --- 2D Game Stage & Canvas --- */
+  .stage {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    z-index: 2000;
+    background: #000;
+  }
+
+  .hud {
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    gap: 4px;
+    padding: 6px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .hud-block {
+    padding: 4px 8px;
+    border-radius: 8px;
+    gap: 4px;
+  }
+
+  .hud-label { font-size: 9px; }
+  .hud-value { font-size: 14px; }
+  .hearts { font-size: 13px; }
+
+  .progress-bar-wrap {
+    width: 80px;
+    height: 10px;
+  }
+
+  .progress-text { font-size: 8px; }
+
+  /* Question Panel Overlay on Mobile */
+  .question-panel {
+    position: absolute;
+    bottom: 12px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    padding: 14px;
+    border-radius: 18px;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(20px);
+    z-index: 2100;
+  }
+
+  .timer-ring-wrap {
+    width: 50px;
+    height: 50px;
+    align-self: center;
+  }
+
+  .timer-number { font-size: 16px; }
+  .question-eyebrow { font-size: 9px; }
+  .question-text { font-size: 15px; margin-bottom: 10px; }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .option-btn {
+    padding: 12px;
+    font-size: 13px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  /* Modals / Overlays (Level Complete & Game Over) */
+  .glass-card {
+    padding: 22px 16px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 380px;
+  }
+
+  .title-glow { font-size: 24px; }
+  .stat-value { font-size: 18px; }
+  .stat-label { font-size: 10px; }
+
+  .gameover-buttons {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* ---- Small Screens / Compact Phones (max-width: 400px) ---- */
+@media (max-width: 400px) {
+  .hero-title { font-size: 24px; }
+  .hero-description { font-size: 13px; }
+  
+  .metric-card { padding: 10px 6px; }
+  .metric-number { font-size: 18px; }
+  .metric-label { font-size: 10px; }
+
+  .level-circle { width: 50px; height: 50px; font-size: 16px; }
+  .map-view-title { font-size: 22px; }
+  .lb-title { font-size: 22px; }
+  
+  .brand-text { font-size: 16px; }
+
+  .mobile-nav-item {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .mobile-nav-icon {
+    font-size: 16px;
+  }
 }
