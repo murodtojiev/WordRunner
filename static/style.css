@@ -1317,14 +1317,16 @@ body {
     top: 0;
     z-index: 900;
     backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .nav-container {
-    padding: 10px 14px;
-    height: 58px;
+    padding: 8px 10px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 6px;
   }
 
   /* Hide desktop menu on mobile (handled by bottom nav) */
@@ -1332,46 +1334,68 @@ body {
     display: none !important;
   }
 
+  .nav-brand {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
   .brand-text {
-    font-size: 18px;
+    font-size: 15px;
     letter-spacing: -0.3px;
   }
 
   .brand-icon {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .nav-user-area {
-    gap: 8px;
+    gap: 5px;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .user-stats-pill {
-    gap: 4px;
-    padding: 3px 8px;
+    gap: 3px;
+    padding: 0;
+    background: transparent;
+    border: none;
   }
 
   .stat-badge {
-    font-size: 11px;
-    padding: 3px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+    white-space: nowrap;
   }
 
   .user-profile-menu {
-    padding: 3px 6px;
+    padding: 0;
     gap: 4px;
+    background: transparent;
+    border: none;
   }
 
   .user-avatar {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
+    border-width: 1.5px;
+    flex-shrink: 0;
   }
 
   .user-name-text {
-    display: none; /* Hide username string to save header space */
+    display: none !important; /* Hide username string on mobile to prevent overcrowding */
   }
 
   .btn-nav-logout {
-    font-size: 11px;
-    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-mid);
+    white-space: nowrap;
   }
 
   .btn-nav-login {
@@ -1738,6 +1762,19 @@ body {
 
 /* ---- Small Screens / Compact Phones (max-width: 400px) ---- */
 @media (max-width: 400px) {
+  .brand-accent { display: none !important; } /* Shows 'WORD' on narrow screens */
+  .brand-text { font-size: 15px; }
+
+  .stat-badge {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+
+  .btn-nav-logout {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+
   .hero-title { font-size: 24px; }
   .hero-description { font-size: 13px; }
   
@@ -1748,8 +1785,6 @@ body {
   .level-circle { width: 50px; height: 50px; font-size: 16px; }
   .map-view-title { font-size: 22px; }
   .lb-title { font-size: 22px; }
-  
-  .brand-text { font-size: 16px; }
 
   .mobile-nav-item {
     font-size: 10px;
