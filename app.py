@@ -68,6 +68,14 @@ def init_db():
             current_level INTEGER DEFAULT 1
         )
     """)
+    db_execute(conn, engine, """
+        CREATE TABLE IF NOT EXISTS vocab (
+            id SERIAL PRIMARY KEY,
+            uz_word TEXT NOT NULL,
+            en_translation TEXT NOT NULL,
+            level INTEGER DEFAULT 1
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -140,7 +148,70 @@ def update_user_level(user_id, new_level):
     return dict(row)["current_level"] if row else None
 
 
+def seed_vocab():
+    conn, engine = get_db()
+    cur = db_execute(conn, engine, "SELECT COUNT(*) AS cnt FROM vocab")
+    row = cur.fetchone()
+    if row and (row.get("cnt") == 0 or list(row.values())[0] == 0):
+        words = [
+            # Level 1 (Basic)
+            ("kitob", "book", 1),
+            ("maktab", "school", 1),
+            ("uy", "house", 1),
+            ("suv", "water", 1),
+            ("non", "bread", 1),
+            ("ota", "father", 1),
+            ("ona", "mother", 1),
+            ("bola", "child", 1),
+            # Level 2 (Animals)
+            ("mushuk", "cat", 2),
+            ("it", "dog", 2),
+            ("ot", "horse", 2),
+            ("qush", "bird", 2),
+            ("baliq", "fish", 2),
+            ("tulki", "fox", 2),
+            ("bo'ri", "wolf", 2),
+            ("quyosh", "sun", 2),
+            # Level 3 (Colors/Nature)
+            ("qizil", "red", 3),
+            ("ko'k", "blue", 3),
+            ("yashil", "green", 3),
+            ("oq", "white", 3),
+            ("qora", "black", 3),
+            ("daraxt", "tree", 3),
+            ("gul", "flower", 3),
+            ("tog'", "mountain", 3),
+            # Level 4 (Actions)
+            ("yurmoq", "to walk", 4),
+            ("yugurmoq", "to run", 4),
+            ("o'qimoq", "to read", 4),
+            ("yozmoq", "to write", 4),
+            ("uxlamoq", "to sleep", 4),
+            ("oshmoq", "to eat", 4),
+            ("ichmoq", "to drink", 4),
+            ("ko'rmoq", "to see", 4),
+            # Level 5 (Advanced)
+            ("bilim", "knowledge", 5),
+            ("do'st", "friend", 5),
+            ("vaqt", "time", 5),
+            ("dunyo", "world", 5),
+            ("hayot", "life", 5),
+            ("sevgi", "love", 5),
+            ("kuch", "power", 5),
+            ("umid", "hope", 5),
+        ]
+        for uz_word, en_translation, level in words:
+            db_execute(
+                conn, engine,
+                "INSERT INTO vocab (uz_word, en_translation, level) VALUES (?, ?, ?)",
+                (uz_word, en_translation, level),
+            )
+        conn.commit()
+    conn.close()
+
+
 init_db()
+seed_vocab()
 
 
 # -----------------------------------------------------------------------
@@ -449,6 +520,59 @@ def leaderboard():
         })
 
     return jsonify(result)
+
+
+# -----------------------------------------------------------------------
+# 10. Games & Word Matching routes
+# -----------------------------------------------------------------------
+@app.route('/games')
+def games_page():
+    user = session.get('user')
+    if not user:
+        return redirect(url_for('login'))
+    fresh = get_user_by_id(user['id'])
+    if fresh:
+        session['user']['total_score'] = fresh['total_score']
+        session['user']['current_level'] = fresh['current_level']
+        user = session['user']
+    return render_template('index.html', user=user, active_page='games')
+
+
+@app.route('/games/match')
+def match_game_page():
+    user = session.get('user')
+    if not user:
+        return redirect(url_for('login'))
+    fresh = get_user_by_id(user['id'])
+    if fresh:
+        session['user']['total_score'] = fresh['total_score']
+        session['user']['current_level'] = fresh['current_level']
+        user = session['user']
+    return render_template('index.html', user=user, active_page='match_game')
+
+
+@app.route('/api/vocab')
+@login_required
+def get_vocab():
+    level = request.args.get('level', 1, type=int)
+    level = max(1, min(level, 5))
+    conn, engine = get_db()
+    cur = db_execute(conn, engine,
+        'SELECT id, uz_word, en_translation FROM vocab WHERE level = ? ORDER BY RANDOM() LIMIT 4',
+        (level,)
+    )
+    rows = cur.fetchall()
+    conn.close()
+    words = [dict(r) for r in rows]
+    # Also provide all translations from this level for wrong options
+    conn2, engine2 = get_db()
+    cur2 = db_execute(conn2, engine2,
+        'SELECT DISTINCT en_translation FROM vocab WHERE level = ?',
+        (level,)
+    )
+    all_translations = [dict(r)['en_translation'] for r in cur2.fetchall()]
+    conn2.close()
+    return jsonify({'words': words, 'all_translations': all_translations, 'level': level})
 
 
 if __name__ == "__main__":

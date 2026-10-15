@@ -29,6 +29,11 @@
           <a href="/login" class="nav-link">Learn / Map</a>
           <a href="/login" class="nav-link">Leaderboard</a>
         {% endif %}
+        {% if user %}
+          <a href="/games" class="nav-link {% if active_page == 'games' or active_page == 'match_game' %}active{% endif %}">Games</a>
+        {% else %}
+          <a href="/login" class="nav-link">Games</a>
+        {% endif %}
       </div>
 
       <div class="nav-user-area">
@@ -67,6 +72,10 @@
         <span class="mobile-nav-icon">🏆</span>
         <span class="mobile-nav-label">Leaderboard</span>
       </a>
+      <a href="/games" class="mobile-nav-item {% if active_page == 'games' or active_page == 'match_game' %}active{% endif %}">
+        <span class="mobile-nav-icon">🎮</span>
+        <span class="mobile-nav-label">Games</span>
+      </a>
     {% else %}
       <a href="/login" class="mobile-nav-item">
         <span class="mobile-nav-icon">🗺️</span>
@@ -75,6 +84,10 @@
       <a href="/login" class="mobile-nav-item">
         <span class="mobile-nav-icon">🏆</span>
         <span class="mobile-nav-label">Leaderboard</span>
+      </a>
+      <a href="/login" class="mobile-nav-item">
+        <span class="mobile-nav-icon">🎮</span>
+        <span class="mobile-nav-label">Games</span>
       </a>
     {% endif %}
   </nav>
@@ -227,6 +240,106 @@
     {% endif %}
     {% endif %}
 
+    <!-- ===== 4. GAMES SELECTION PAGE ===== -->
+    {% if active_page == 'games' %}
+    {% if user %}
+    <section class="games-section-view">
+      <div class="games-view-container">
+        <div class="games-header">
+          <span class="games-eyebrow">CHOOSE YOUR GAME</span>
+          <h1 class="games-title">🎮 Game Center</h1>
+          <p class="games-subtitle">Select a game mode to practice your English skills!</p>
+        </div>
+
+        <div class="games-grid">
+          <a href="/map" class="game-card game-card-runner">
+            <div class="game-card-icon">🏃</div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">English Runner</h3>
+              <p class="game-card-desc">Run through obstacles and answer English grammar & vocabulary questions under time pressure!</p>
+              <div class="game-card-meta">
+                <span class="game-meta-badge">⚡ 10 Levels</span>
+                <span class="game-meta-badge">⏱️ 15s Timer</span>
+              </div>
+            </div>
+            <span class="game-card-arrow">→</span>
+          </a>
+
+          <a href="/games/match" class="game-card game-card-match">
+            <div class="game-card-icon">🔤</div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">Word Match</h3>
+              <p class="game-card-desc">Match Uzbek words with their correct English translations! Cards disappear when you answer correctly.</p>
+              <div class="game-card-meta">
+                <span class="game-meta-badge">🇺🇿 Uzbek → English</span>
+                <span class="game-meta-badge">📚 5 Levels</span>
+              </div>
+            </div>
+            <span class="game-card-arrow">→</span>
+          </a>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+    {% endif %}
+
+    <!-- ===== 5. WORD MATCH GAME ===== -->
+    {% if active_page == 'match_game' %}
+    {% if user %}
+    <section class="match-game-section">
+      <div class="match-game-container">
+        <div class="match-game-header">
+          <button id="matchBackBtn" class="match-back-btn" onclick="window.location.href='/games'">← Back</button>
+          <h2 class="match-game-title">🔤 Word Match</h2>
+          <div class="match-level-indicator">
+            <span class="match-level-label">LEVEL</span>
+            <span id="matchLevelNum" class="match-level-num">1</span>
+          </div>
+        </div>
+
+        <!-- Level selector -->
+        <div class="match-levels-row" id="matchLevelsRow">
+          <button class="match-level-btn active" data-level="1">Level 1<br><small>Basic</small></button>
+          <button class="match-level-btn" data-level="2">Level 2<br><small>Animals</small></button>
+          <button class="match-level-btn" data-level="3">Level 3<br><small>Nature</small></button>
+          <button class="match-level-btn" data-level="4">Level 4<br><small>Actions</small></button>
+          <button class="match-level-btn" data-level="5">Level 5<br><small>Advanced</small></button>
+        </div>
+
+        <!-- Score bar -->
+        <div class="match-score-bar">
+          <div class="match-score-item">
+            <span class="match-score-label">SCORE</span>
+            <span id="matchScore" class="match-score-value">0</span>
+          </div>
+          <div class="match-score-item">
+            <span class="match-score-label">MATCHES</span>
+            <span id="matchCount" class="match-score-value">0 / 4</span>
+          </div>
+        </div>
+
+        <!-- Game board -->
+        <div class="match-board" id="matchBoard">
+          <div class="match-loading">Loading words...</div>
+        </div>
+
+        <!-- Level complete overlay -->
+        <div class="match-complete-overlay hidden" id="matchCompleteOverlay">
+          <div class="match-complete-card">
+            <div class="match-complete-emoji">🎉</div>
+            <h2 class="match-complete-title">Level Complete!</h2>
+            <p class="match-complete-score">Score: <span id="matchFinalScore">0</span></p>
+            <div class="match-complete-buttons">
+              <button id="matchNextLevelBtn" class="btn-primary">Next Level →</button>
+              <button onclick="window.location.href='/games'" class="btn-secondary">Back to Games</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+    {% endif %}
+
     <!-- ===== 4. HTML5 CANVAS GAME STAGE (Hidden until level is clicked) ===== -->
     {% if user %}
     <div class="stage hidden" id="gameStage">
@@ -365,5 +478,8 @@
   </div>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
+  {% if active_page == 'match_game' %}
+  <script src="{{ url_for('static', filename='match_game.js') }}"></script>
+  {% endif %}
 </body>
 </html>
