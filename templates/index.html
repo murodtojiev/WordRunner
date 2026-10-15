@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>WordRunner — Next-Gen Gamified English Platform</title>
-<meta name="description" content="Master English vocabulary and grammar through an interactive 10-level runner game and AI language tutor.">
+<title>WordRunner — Ingliz tilini o'yin orqali o'rganing</title>
+<meta name="description" content="Ingliz tili grammatikasi va lug'atini interaktiv 10 bosqichli o'yin va AI tutor orqali o'rganing.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -21,16 +21,16 @@
       </a>
 
       <div class="nav-menu">
-        <a href="/" class="nav-link {% if active_page == 'home' %}active{% endif %}">Home</a>
+        <a href="/" class="nav-link {% if active_page == 'home' %}active{% endif %}">Bosh sahifa</a>
         {% if user %}
-          <a href="/leaderboard" class="nav-link {% if active_page == 'leaderboard' %}active{% endif %}">Leaderboard</a>
+          <a href="/leaderboard" class="nav-link {% if active_page == 'leaderboard' %}active{% endif %}">Reyting</a>
         {% else %}
-          <a href="/login" class="nav-link">Leaderboard</a>
+          <a href="/login" class="nav-link">Reyting</a>
         {% endif %}
         {% if user %}
-          <a href="/games" class="nav-link {% if active_page == 'games' or active_page == 'match_game' %}active{% endif %}">Games</a>
+          <a href="/games" class="nav-link {% if active_page == 'games' or active_page == 'match_game' %}active{% endif %}">O'yinlar</a>
         {% else %}
-          <a href="/login" class="nav-link">Games</a>
+          <a href="/login" class="nav-link">O'yinlar</a>
         {% endif %}
       </div>
 
@@ -43,12 +43,12 @@
           <div class="user-profile-menu">
             <img src="{{ user.picture }}" alt="{{ user.name }}" class="user-avatar">
             <span class="user-name-text">{{ user.name }}</span>
-            <a href="{{ url_for('logout') }}" class="btn-nav-logout" title="Logout">Logout</a>
+            <a href="{{ url_for('logout') }}" class="btn-nav-logout" title="Chiqish">Chiqish</a>
           </div>
         {% else %}
           <a href="{{ url_for('login') }}" class="btn-nav-login">
             <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
-            Start Learning
+            O'rganishni boshlash
           </a>
         {% endif %}
       </div>
@@ -59,25 +59,25 @@
   <nav class="mobile-bottom-nav">
     <a href="/" class="mobile-nav-item {% if active_page == 'home' %}active{% endif %}">
       <span class="mobile-nav-icon">🏠</span>
-      <span class="mobile-nav-label">Home</span>
+      <span class="mobile-nav-label">Bosh</span>
     </a>
     {% if user %}
       <a href="/leaderboard" class="mobile-nav-item {% if active_page == 'leaderboard' %}active{% endif %}">
         <span class="mobile-nav-icon">🏆</span>
-        <span class="mobile-nav-label">Leaderboard</span>
+        <span class="mobile-nav-label">Reyting</span>
       </a>
       <a href="/games" class="mobile-nav-item {% if active_page == 'games' or active_page == 'match_game' %}active{% endif %}">
         <span class="mobile-nav-icon">🎮</span>
-        <span class="mobile-nav-label">Games</span>
+        <span class="mobile-nav-label">O'yinlar</span>
       </a>
     {% else %}
       <a href="/login" class="mobile-nav-item">
         <span class="mobile-nav-icon">🏆</span>
-        <span class="mobile-nav-label">Leaderboard</span>
+        <span class="mobile-nav-label">Reyting</span>
       </a>
       <a href="/login" class="mobile-nav-item">
         <span class="mobile-nav-icon">🎮</span>
-        <span class="mobile-nav-label">Games</span>
+        <span class="mobile-nav-label">O'yinlar</span>
       </a>
     {% endif %}
   </nav>
@@ -90,28 +90,28 @@
     <section class="hero-section">
       <div class="hero-container">
         <div class="hero-badge">
-          <span class="sparkle">✨</span> REVOLUTIONARY ED-TECH PLATFORM
+          <span class="sparkle">✨</span> ZAMONAVIY TA'LIM PLATFORMASI
         </div>
         <h1 class="hero-title">
-          Master English Through <span class="gradient-text">Gamified Play</span>
+          Ingliz tilini <span class="gradient-text">o'yin orqali</span> o'rganing
         </h1>
         <p class="hero-description">
-          WordRunner combines high-speed 2D runner mechanics with real-time vocabulary and grammar challenges. Level up through an interactive roadmap, climb global rankings, and practice anytime with your personal AI English tutor.
+          WordRunner tezkor 2D yugurish o'yini bilan ingliz tili grammatikasi va lug'at mashqlarini birlashtiradi. Bosqichma-bosqich o'rganing, reytingda yuqoriga ko'taring va shaxsiy AI tutor bilan istalgan vaqtda mashq qiling.
         </p>
 
         <div class="hero-cta-group">
           {% if user %}
             <a href="/map" class="btn-hero-primary">
-              <span>Continue Learning</span>
+              <span>Davom etish</span>
               <span class="btn-arrow">→</span>
             </a>
             <a href="/leaderboard" class="btn-hero-secondary">
-              <span>🏆 View Leaderboard</span>
+              <span>🏆 Reytingni ko'rish</span>
             </a>
           {% else %}
             <a href="{{ url_for('login') }}" class="btn-hero-primary">
               <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="btn-g-logo">
-              <span>Start Learning Free with Google</span>
+              <span>Google orqali bepul boshlash</span>
               <span class="btn-arrow">→</span>
             </a>
           {% endif %}
@@ -121,19 +121,19 @@
         <div class="hero-metrics">
           <div class="metric-card">
             <span class="metric-number">10</span>
-            <span class="metric-label">Progressive Levels</span>
+            <span class="metric-label">Bosqichlar</span>
           </div>
           <div class="metric-card">
             <span class="metric-number">60+</span>
-            <span class="metric-label">Core Vocabulary Skills</span>
+            <span class="metric-label">Asosiy so'z boyligi</span>
           </div>
           <div class="metric-card">
             <span class="metric-number">15s</span>
-            <span class="metric-label">Quick-Fire Rounds</span>
+            <span class="metric-label">Tezkor raundlar</span>
           </div>
           <div class="metric-card">
             <span class="metric-number">24/7</span>
-            <span class="metric-label">AI Tutor Assistance</span>
+            <span class="metric-label">AI tutor yordami</span>
           </div>
         </div>
       </div>
@@ -143,33 +143,33 @@
     <section class="features-section">
       <div class="features-container">
         <div class="section-header">
-          <span class="section-eyebrow">WHY WORDRUNNER?</span>
-          <h2 class="section-title">Designed for Fast, Addictive Learning</h2>
+          <span class="section-eyebrow">NIMA UCHUN WORDRUNNER?</span>
+          <h2 class="section-title">Tez va qiziqarli o'rganish uchun yaratilgan</h2>
         </div>
 
         <div class="features-grid">
           <div class="feature-card">
             <div class="feature-icon icon-roadmap">🗺️</div>
-            <h3 class="feature-title">10-Level Progressive Roadmap</h3>
-            <p class="feature-desc">A structured, Duolingo-style roadmap designed to take you from foundational grammar to advanced vocabulary step by step.</p>
+            <h3 class="feature-title">10 bosqichli yo'l xaritasi</h3>
+            <p class="feature-desc">Duolingo uslubidagi tuzilgan yo'l xaritasi — asosiy grammatikadan murakkab lug'atgacha bosqichma-bosqich olib boradi.</p>
           </div>
 
           <div class="feature-card">
             <div class="feature-icon icon-runner">⚡</div>
-            <h3 class="feature-title">Gamified Runner Gameplay</h3>
-            <p class="feature-desc">Run, jump, and overcome obstacles by making quick decisions under 15-second time pressure for instant recall memory.</p>
+            <h3 class="feature-title">O'yin orqali o'rganish</h3>
+            <p class="feature-desc">15 soniya ichida tez qaror qabul qiling, to'siqlardan o'ting va xotirangizni mustahkamlang.</p>
           </div>
 
           <div class="feature-card">
             <div class="feature-icon icon-leaderboard">🏆</div>
             <h3 class="feature-title">Global Leaderboard & Ranks</h3>
-            <p class="feature-desc">Compete with learners around the world. Earn points for every correct answer and claim your spot among the Top 10.</p>
+            <p class="feature-desc">Butun dunyo o'rganuvchilari bilan raqobatlashing. Har bir to'g'ri javob uchun ball yig'ing va Top 10 ga kiring.</p>
           </div>
 
           <div class="feature-card">
             <div class="feature-icon icon-ai">🤖</div>
-            <h3 class="feature-title">AI English Language Tutor</h3>
-            <p class="feature-desc">Get instant grammar explanations, vocabulary definitions, and personalized practice tips anytime with your AI assistant.</p>
+            <h3 class="feature-title">AI ingliz tili o'qituvchisi</h3>
+            <p class="feature-desc">AI yordamchingiz bilan istalgan vaqtda grammatika tushuntirishlarini, lug'at ta'riflarini va shaxsiy mashq maslahatlari oling.</p>
           </div>
         </div>
       </div>
@@ -182,9 +182,9 @@
     <section id="mapScreen" class="map-section-view">
       <div class="map-view-container">
         <div class="map-view-header">
-          <span class="map-eyebrow">DUOLINGO-STYLE PROGRESSION</span>
-          <h1 class="map-view-title">YOUR LEARNING ROADMAP</h1>
-          <p class="map-view-subtitle">Answer 15 words correctly in each level to unlock the next challenge.</p>
+          <span class="map-eyebrow">BOSQICHMA-BOSQICH RIVOJLANISH</span>
+          <h1 class="map-view-title">O'RGANISH YO'L XARITASI</h1>
+          <p class="map-view-subtitle">Keyingi bosqichni ochish uchun har bir darajada 15 ta so'zga to'g'ri javob bering.</p>
         </div>
 
         <div class="map-path-card">
@@ -199,7 +199,7 @@
                   <span class="level-lock">🔒</span>
                 {% endif %}
               </div>
-              <span class="level-label">Level {{ level }}</span>
+              <span class="level-label">{{ level }}-bosqich</span>
             </div>
             {% endfor %}
           </div>
@@ -215,14 +215,14 @@
     <section id="leaderboardScreen" class="leaderboard-section-view">
       <div class="leaderboard-view-container">
         <div class="leaderboard-header">
-          <span class="lb-eyebrow">GLOBAL RANKINGS</span>
-          <h1 class="lb-title">🏆 TOP 10 LEARNERS</h1>
-          <p class="lb-subtitle">Earn score by completing 15-word levels and climb to the top of the leaderboard!</p>
+          <span class="lb-eyebrow">GLOBAL REYTING</span>
+          <h1 class="lb-title">🏆 ENG YAXSHI 10 O'RGANUVCHI</h1>
+          <p class="lb-subtitle">15 so'zli bosqichlarni yakunlab ball to'plang va reyting cho'qqisiga ko'taring!</p>
         </div>
 
         <div class="leaderboard-card">
           <div class="leaderboard-list" id="leaderboardList">
-            <div class="leaderboard-loading">Loading top learners...</div>
+            <div class="leaderboard-loading">Yuklanmoqda...</div>
           </div>
         </div>
       </div>
@@ -236,20 +236,20 @@
     <section class="games-section-view">
       <div class="games-view-container">
         <div class="games-header">
-          <span class="games-eyebrow">CHOOSE YOUR GAME</span>
-          <h1 class="games-title">🎮 Game Center</h1>
-          <p class="games-subtitle">Select a game mode to practice your English skills!</p>
+          <span class="games-eyebrow">O'YINNI TANLANG</span>
+          <h1 class="games-title">🎮 O'yinlar Markazi</h1>
+          <p class="games-subtitle">Ingliz tilini mashq qilish uchun o'yin turini tanlang!</p>
         </div>
 
         <div class="games-grid">
           <a href="/map" class="game-card game-card-runner">
             <div class="game-card-icon">🏃</div>
             <div class="game-card-content">
-              <h3 class="game-card-title">English Runner</h3>
+              <h3 class="game-card-title">Ingliz tili yugurik</h3>
               <p class="game-card-desc">Run through obstacles and answer English grammar & vocabulary questions under time pressure!</p>
               <div class="game-card-meta">
-                <span class="game-meta-badge">⚡ 10 Levels</span>
-                <span class="game-meta-badge">⏱️ 15s Timer</span>
+                <span class="game-meta-badge">⚡ 10 bosqich</span>
+                <span class="game-meta-badge">⏱️ 15s taymer</span>
               </div>
             </div>
             <span class="game-card-arrow">→</span>
@@ -258,11 +258,11 @@
           <a href="/games/match" class="game-card game-card-match">
             <div class="game-card-icon">🔤</div>
             <div class="game-card-content">
-              <h3 class="game-card-title">Word Match</h3>
-              <p class="game-card-desc">Match Uzbek words with their correct English translations! Cards disappear when you answer correctly.</p>
+              <h3 class="game-card-title">So'z topish</h3>
+              <p class="game-card-desc">O'zbekcha so'zlarni to'g'ri inglizcha tarjimasi bilan moslang! To'g'ri javobda kartalar yo'qoladi.</p>
               <div class="game-card-meta">
-                <span class="game-meta-badge">🇺🇿 Uzbek → English</span>
-                <span class="game-meta-badge">📚 5 Levels</span>
+                <span class="game-meta-badge">🇺🇿 O'zbekcha → Inglizcha</span>
+                <span class="game-meta-badge">📚 5 bosqich</span>
               </div>
             </div>
             <span class="game-card-arrow">→</span>
@@ -279,49 +279,49 @@
     <section class="match-game-section">
       <div class="match-game-container">
         <div class="match-game-header">
-          <button id="matchBackBtn" class="match-back-btn" onclick="window.location.href='/games'">← Back</button>
-          <h2 class="match-game-title">🔤 Word Match</h2>
+          <button id="matchBackBtn" class="match-back-btn" onclick="window.location.href='/games'">← Orqaga</button>
+          <h2 class="match-game-title">🔤 So'z topish</h2>
           <div class="match-level-indicator">
-            <span class="match-level-label">LEVEL</span>
+            <span class="match-level-label">BOSQICH</span>
             <span id="matchLevelNum" class="match-level-num">1</span>
           </div>
         </div>
 
         <!-- Level selector -->
         <div class="match-levels-row" id="matchLevelsRow">
-          <button class="match-level-btn active" data-level="1">Level 1<br><small>Basic</small></button>
-          <button class="match-level-btn" data-level="2">Level 2<br><small>Animals</small></button>
-          <button class="match-level-btn" data-level="3">Level 3<br><small>Nature</small></button>
-          <button class="match-level-btn" data-level="4">Level 4<br><small>Actions</small></button>
-          <button class="match-level-btn" data-level="5">Level 5<br><small>Advanced</small></button>
+          <button class="match-level-btn active" data-level="1">1-bosqich<br><small>Asosiy</small></button>
+          <button class="match-level-btn" data-level="2">2-bosqich<br><small>Hayvonlar</small></button>
+          <button class="match-level-btn" data-level="3">3-bosqich<br><small>Tabiat</small></button>
+          <button class="match-level-btn" data-level="4">4-bosqich<br><small>Fe'llar</small></button>
+          <button class="match-level-btn" data-level="5">5-bosqich<br><small>Murakkab</small></button>
         </div>
 
         <!-- Score bar -->
         <div class="match-score-bar">
           <div class="match-score-item">
-            <span class="match-score-label">SCORE</span>
+            <span class="match-score-label">BALL</span>
             <span id="matchScore" class="match-score-value">0</span>
           </div>
           <div class="match-score-item">
-            <span class="match-score-label">MATCHES</span>
+            <span class="match-score-label">TOPILDI</span>
             <span id="matchCount" class="match-score-value">0 / 4</span>
           </div>
         </div>
 
         <!-- Game board -->
         <div class="match-board" id="matchBoard">
-          <div class="match-loading">Loading words...</div>
+          <div class="match-loading">So'zlar yuklanmoqda...</div>
         </div>
 
         <!-- Level complete overlay -->
         <div class="match-complete-overlay hidden" id="matchCompleteOverlay">
           <div class="match-complete-card">
             <div class="match-complete-emoji">🎉</div>
-            <h2 class="match-complete-title">Level Complete!</h2>
-            <p class="match-complete-score">Score: <span id="matchFinalScore">0</span></p>
+            <h2 class="match-complete-title">Bosqich yakunlandi!</h2>
+            <p class="match-complete-score">Ball: <span id="matchFinalScore">0</span></p>
             <div class="match-complete-buttons">
-              <button id="matchNextLevelBtn" class="btn-primary">Next Level →</button>
-              <button onclick="window.location.href='/games'" class="btn-secondary">Back to Games</button>
+              <button id="matchNextLevelBtn" class="btn-primary">Keyingi bosqich →</button>
+              <button onclick="window.location.href='/games'" class="btn-secondary">O'yinlarga qaytish</button>
             </div>
           </div>
         </div>
@@ -341,7 +341,7 @@
         </div>
 
         <div class="hud-block hud-progress">
-          <span class="hud-label">PROGRESS</span>
+          <span class="hud-label">JARAYON</span>
           <div class="progress-bar-wrap">
             <div class="progress-bar-fill" id="progressBarFill"></div>
             <span class="progress-text" id="progressText">0 / 15</span>
@@ -349,12 +349,12 @@
         </div>
 
         <div class="hud-block hud-level">
-          <span class="hud-label">LEVEL</span>
+          <span class="hud-label">BOSQICH</span>
           <span id="levelValue" class="hud-value">01</span>
         </div>
 
         <div class="hud-block hud-score">
-          <span class="hud-label">SCORE</span>
+          <span class="hud-label">BALL</span>
           <span id="scoreValue" class="hud-value">0000</span>
         </div>
       </header>
@@ -373,8 +373,8 @@
         </div>
 
         <div class="question-body">
-          <p class="question-eyebrow">OBSTACLE AHEAD — ANSWER TO JUMP</p>
-          <h2 id="questionText" class="question-text">Loading…</h2>
+          <p class="question-eyebrow">TO'SIQ — JAVOB BERING!</p>
+          <h2 id="questionText" class="question-text">Yuklanmoqda…</h2>
           <div id="optionsGrid" class="options-grid"></div>
         </div>
       </section>
@@ -382,40 +382,40 @@
       <!-- Level Complete screen -->
       <section id="levelCompleteScreen" class="overlay hidden">
         <div class="glass-card complete-card">
-          <p class="eyebrow eyebrow-success">MISSION COMPLETE</p>
-          <h1 class="title-glow title-success">LEVEL <span id="completedLevelNum">1</span> CLEARED!</h1>
+          <p class="eyebrow eyebrow-success">VAZIFA BAJARILDI</p>
+          <h1 class="title-glow title-success"><span id="completedLevelNum">1</span>-BOSQICH O'TILDI!</h1>
           <div class="stats-row">
             <div class="stat">
-              <span class="stat-label">SCORE EARNED</span>
+              <span class="stat-label">YUTILGAN BALL</span>
               <span id="levelScoreEarned" class="stat-value stat-value-success">0</span>
             </div>
             <div class="stat">
-              <span class="stat-label">WORDS CLEARED</span>
+              <span class="stat-label">SO'ZLAR TOPILDI</span>
               <span class="stat-value stat-value-success">15</span>
             </div>
           </div>
-          <button id="backToMapBtn" class="btn-primary btn-success">BACK TO MAP</button>
+          <button id="backToMapBtn" class="btn-primary btn-success">XARITAGA QAYTISH</button>
         </div>
       </section>
 
       <!-- Game over screen -->
       <section id="gameOverScreen" class="overlay hidden">
         <div class="glass-card over-card">
-          <p class="eyebrow eyebrow-danger">RUN TERMINATED</p>
-          <h1 class="title-glow title-danger">GAME OVER</h1>
+          <p class="eyebrow eyebrow-danger">O'YIN TUGADI</p>
+          <h1 class="title-glow title-danger">O'YIN TUGADI</h1>
           <div class="stats-row">
             <div class="stat">
-              <span class="stat-label">SCORE</span>
+              <span class="stat-label">BALL</span>
               <span id="finalScore" class="stat-value">0</span>
             </div>
             <div class="stat">
-              <span class="stat-label">CLEARED</span>
+              <span class="stat-label">TOPILDI</span>
               <span id="finalCleared" class="stat-value">0</span>
             </div>
           </div>
           <div class="gameover-buttons">
-            <button id="retryBtn" class="btn-primary">RETRY LEVEL</button>
-            <button id="backToMapBtnGO" class="btn-secondary">BACK TO MAP</button>
+            <button id="retryBtn" class="btn-primary">QAYTA URINISH</button>
+            <button id="backToMapBtnGO" class="btn-secondary">XARITAGA QAYTISH</button>
           </div>
         </div>
       </section>
@@ -435,8 +435,8 @@
         <div class="chat-header-info">
           <div class="bot-avatar">🤖</div>
           <div>
-            <h3 class="chat-bot-name">AI English Tutor</h3>
-            <span class="chat-status"><span class="status-dot"></span> Online</span>
+            <h3 class="chat-bot-name">AI Ingliz tili o'qituvchisi</h3>
+            <span class="chat-status"><span class="status-dot"></span> Onlayn</span>
           </div>
         </div>
         <button id="closeAiChat" class="btn-close-chat" aria-label="Close Chat">&times;</button>
@@ -444,24 +444,24 @@
 
       <div class="chat-messages" id="chatMessages">
         <div class="chat-bubble bot-bubble">
-          <p>Hi! 👋 I'm your <strong>AI English Tutor</strong>. How can I help you practice your vocabulary or grammar today?</p>
+          <p>Hi! 👋 Men sizning <strong>AI ingliz tili o'qituvchingizman</strong>. Bugun lug'at yoki grammatikani mashq qilishda qanday yordam bera olaman?</p>
         </div>
 
         <div class="chat-suggestions" id="chatSuggestions">
-          <button class="suggestion-pill" data-msg="Explain Present Perfect vs Past Simple">💡 Present Perfect vs Past Simple</button>
-          <button class="suggestion-pill" data-msg="Give me 3 synonyms for 'Happy'">📚 Synonyms for 'Happy'</button>
-          <button class="suggestion-pill" data-msg="How do I advance to Level 2?">🎮 How to level up?</button>
+          <button class="suggestion-pill" data-msg="Present Perfect va Past Simple ni tushuntiring">💡 Present Perfect vs Past Simple</button>
+          <button class="suggestion-pill" data-msg="'Happy' so'zining 3 ta sinonimini bering">📚 'Happy' sinonimlari</button>
+          <button class="suggestion-pill" data-msg="2-bosqichga qanday o'taman?">🎮 Qanday o'taman?</button>
         </div>
       </div>
 
       <form class="chat-input-form" id="chatForm">
-        <input type="text" id="chatInput" placeholder="Ask your AI tutor a question..." autocomplete="off">
+        <input type="text" id="chatInput" placeholder="AI tutorga savol bering..." autocomplete="off">
         <button type="submit" class="btn-send-chat" aria-label="Send">➡️</button>
       </form>
     </div>
 
     <!-- Floating Chat Toggle Trigger Button -->
-    <button id="toggleAiChat" class="ai-chat-trigger" title="Ask AI English Tutor">
+    <button id="toggleAiChat" class="ai-chat-trigger" title="AI ingliz tili o'qituvchisi">
       <span class="trigger-icon">💬</span>
       <span class="trigger-label">AI Tutor</span>
     </button>

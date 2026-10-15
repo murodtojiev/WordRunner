@@ -58,7 +58,7 @@
     scoreEl.textContent = '0';
     levelNumEl.textContent = level;
     completeOverlay.classList.add('hidden');
-    board.innerHTML = '<div class="match-loading">Loading words...</div>';
+    board.innerHTML = '<div class="match-loading">So'zlar yuklanmoqda...</div>';
 
     fetch(`/api/vocab?level=${level}`)
       .then(r => r.json())
@@ -69,7 +69,7 @@
         renderBoard(data.words, data.all_translations);
       })
       .catch(err => {
-        board.innerHTML = '<div class="match-loading">Error loading words. Please try again.</div>';
+        board.innerHTML = '<div class="match-loading">Xatolik. Qayta urinib ko'ring.</div>';
         console.error(err);
       });
   }
@@ -179,9 +179,9 @@
     }).catch(console.error);
 
     if (currentLevel >= 5) {
-      nextLevelBtn.textContent = '🏠 Back to Games';
+      nextLevelBtn.textContent = '🏠 O\'yinlarga qaytish';
     } else {
-      nextLevelBtn.textContent = 'Next Level →';
+      nextLevelBtn.textContent = 'Keyingi bosqich →';
     }
   }
 
