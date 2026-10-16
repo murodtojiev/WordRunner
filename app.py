@@ -154,52 +154,137 @@ def seed_vocab():
     row = cur.fetchone()
     if row and (row.get("cnt") == 0 or list(row.values())[0] == 0):
         words = [
-            # Level 1 (Basic)
-            ("kitob", "book", 1),
-            ("maktab", "school", 1),
-            ("uy", "house", 1),
-            ("suv", "water", 1),
-            ("non", "bread", 1),
-            ("ota", "father", 1),
-            ("ona", "mother", 1),
-            ("bola", "child", 1),
-            # Level 2 (Animals)
-            ("mushuk", "cat", 2),
-            ("it", "dog", 2),
-            ("ot", "horse", 2),
-            ("qush", "bird", 2),
-            ("baliq", "fish", 2),
-            ("tulki", "fox", 2),
-            ("bo'ri", "wolf", 2),
-            ("quyosh", "sun", 2),
-            # Level 3 (Colors/Nature)
-            ("qizil", "red", 3),
-            ("ko'k", "blue", 3),
-            ("yashil", "green", 3),
-            ("oq", "white", 3),
-            ("qora", "black", 3),
-            ("daraxt", "tree", 3),
-            ("gul", "flower", 3),
-            ("tog'", "mountain", 3),
-            # Level 4 (Actions)
-            ("yurmoq", "to walk", 4),
-            ("yugurmoq", "to run", 4),
-            ("o'qimoq", "to read", 4),
-            ("yozmoq", "to write", 4),
-            ("uxlamoq", "to sleep", 4),
-            ("oshmoq", "to eat", 4),
-            ("ichmoq", "to drink", 4),
-            ("ko'rmoq", "to see", 4),
-            # Level 5 (Advanced)
-            ("bilim", "knowledge", 5),
-            ("do'st", "friend", 5),
-            ("vaqt", "time", 5),
-            ("dunyo", "world", 5),
-            ("hayot", "life", 5),
-            ("sevgi", "love", 5),
-            ("kuch", "power", 5),
-            ("umid", "hope", 5),
+            # Level 1 (1-24)
+            ("belgilamoq", "highlight", 1), #
+            ("javob bermoq", "respond", 1), #
+            ("tashqarida ovqatlanmoq", "eat out", 1), #
+            ("juda charchagan", "exhausted", 1), #
+            ("ifoda", "expression", 1), #
+            ("yo'qolgan, tushirib qoldirilgan", "missing", 1), #
+            ("qarshi emasmisiz?", "would mind", 1), #
+            ("shakarni uzating", "pass the sugar", 1), #
+            ("ikki hafta", "fortnight", 1), #
+            ("taassurot", "impression", 1), #
+            ("yordam, iltimos", "favor", 1), #
+            ("ruxsat", "permission", 1), #
+            ("so'rov, iltimos", "request", 1), #
+            ("unashtirilmoq", "get engaged", 1), #
+            ("belgi qo'ymoq (✓)", "tick", 1), #
+            ("sobiq (yigit/qiz)", "ex", 1), #
+            ("rozi emaslik", "disagree", 1), #
+            ("navbatlashmoq", "take turns", 1), #
+            ("ajrashmoq", "break up with", 1), #
+            ("tufayli", "thanks to", 1), #
+            ("diktor, teleolifin", "presenter", 1), #
+            ("unashtirilgan yigit", "fiance", 1), #
+            ("qoplamoq, yopmoq", "cover", 1), #
+            ("taklif qilmoq", "propose", 1), #
+
+            # Level 2 (25-48)
+            ("sevib qolmoq", "fall in love", 2), #
+            ("kashf qilmoq", "discover", 2), #
+            ("atama, muddat", "term", 2), #
+            ("ajralmoq", "split up", 2), #
+            ("bo'ydoq, yolg'iz", "single", 2), #
+            ("qabul qilmoq", "accept", 2), #
+            ("kvartirani birga ijaraga olmoq", "share a flat", 2), #
+            ("og'zaki nutq, ko’cha tili", "colloquial", 2), #
+            ("yaxshi chiqishmoq", "get on well/with", 2), #
+            ("umumiyligi bor", "have in common", 2), #
+            ("aloqada bo'lmoq", "keep in touch", 2), #
+            ("mavhum", "abstract", 2), #
+            ("muddati tugamoq", "expire", 2), #
+            ("teng", "equal", 2), #
+            ("bog'lash, havola", "link", 2), #
+            ("unli", "vowel", 2), #
+            ("aloqani uzmoq", "lose touch", 2), #
+            ("bo'g'in", "syllable", 2), #
+            ("istisno", "exception", 2), #
+            ("aksincha", "vice versa", 2), #
+            ("ustun", "column", 2), #
+            ("ehtimol", "probably", 2), #
+            ("vaqtida keladigan", "punctual", 2), #
+            ("ajratib olmoq, ma'lumot", "extract", 2), #
+
+            # Level 3 (49-72)
+            ("qaram bo'lmoq", "be addicted to", 3), #
+            ("endi, bundan keyin", "any more", 3), #
+            ("tashlamoq, voz kechmoq", "give up", 3), #
+            ("moslashtirmoq", "adapt", 3), #
+            ("quyidagi", "following", 3), #
+            ("uchrashuvqa taklif qilmoq", "ask out", 3), #
+            ("ulamoq", "connect", 3), #
+            ("igna b.n. davolash", "acupuncture", 3), #
+            ("oxirgi chora sifatida", "as a last resort", 3), #
+            ("ijodiy", "creative", 3), #
+            ("tushirmoq (yukni)", "unload", 3), #
+            ("talontoroj qilmoq vs o'g'irlamoq", "rob vs steal", 3), #
+            ("orqa, tarbiyalamoq", "rear", 3), #
+            ("payqamoq, bildirishnoma", "notice", 3), #
+            ("bosmoq", "press", 3), #
+            ("qulfini ochmoq", "unlock", 3), #
+            ("tugma", "button", 3), #
+            ("tekshirmoq, ro'yxatdan chiqmoq", "check out", 3), #
+            ("darhol", "immediately", 3), #
+            ("jalb qilmoq, tortmoq", "attract", 3), #
+            ("juftlik, er-xotin", "couple", 3), #
+            ("bilib olmoq, aniqlamoq(topmoq emas)", "find out", 3), #
+            ("holat, sharoit", "circumstance", 3), #
+            ("vaqtida", "on time", 3), #
+
+            # Level 4 (73-96)
+            ("olib ketmoq, o'rganmoq", "pick up", 4), #
+            ("uchrashmoq", "go out together", 4), #
+            ("almashtirmoq", "replace", 4), #
+            ("qo'shimcha", "spare(adj)", 4), #
+            ("tushunmoq, amalga oshirmoq", "realize", 4), #
+            ("chiqarmoq, ozod qilmoq", "release", 4), #
+            ("ko'p o'tmay", "soon after", 4), #
+            ("shikast, zarar", "damage", 4), #
+            ("davlatning bir burchagida narigi burchagigacha", "crosscountry", 4), #
+            ("qutqarmoq", "rescue", 4), #
+            ("latifa, hikoya", "anecdote", 4), #
+            ("baxtsiz hodisa", "accident", 4), #
+            ("tuzalmoq, qaytarib olmoq", "recover", 4), #
+            ("mashhur shaxs", "celebrity", 4), #
+            ("deyarli", "nearly", 4), #
+            ("istisno", "exception", 4), #
+            ("adolatli, ochiq rangli", "fair(adj)", 4), #
+            ("talqin, izoh", "interpretation", 4), #
+            ("oldindan aytmoq", "predict", 4), #
+            ("teginmoq, aloqa", "touch", 4), #
+            ("aldamoq", "cheat", 4), #
+            ("qabul qilmoq", "accept", 4), #
+            ("qurbonlik", "sacrifice", 4), #
+            ("o'rniga", "instead", 4), #
+
+            # Level 5 (97-120)
+            ("yirik hisobda yutmoq", "win by a long way", 5), #
+            ("shart, holat", "condition", 5), #
+            ("dan tashqari", "except", 5), #
+            ("shuningdek, bilan birga", "as well as", 5), #
+            ("almashtirish xonasi", "changing room", 5), #
+            ("bajaramoq, ijro etmoq", "perform", 5), #
+            ("ruxsat bermoq", "allow", 5), #
+            ("ga ko'ra", "according to", 5), #
+            ("sakramoq (to'p)", "bounce", 5), #
+            ("soqol qirmoq", "shave", 5), #
+            ("maydoncha (sport)", "pitch", 5), #
+            ("qochmoq, oldini olmoq", "avoid", 5), #
+            ("majburiy", "compulsory", 5), #
+            ("omad tumori", "lucky charm", 5), #
+            ("qator", "row", 5), #
+            ("to'r", "net", 5), #
+            ("turnir", "tournament", 5), #
+            ("xurofot, bid’at, irm-sirim", "superstition", 5), #
+            ("poyga", "race", 5), #
+            ("so'rovnoma", "questionnaire", 5), #
+            ("afzal ko'rmoq", "prefer", 5), #
+            ("qulaylik, inshoot", "facility", 5), #
+            ("ixtiyoriy", "optional", 5), #
+            ("loyiq bo'lmoq", "deserve", 5), #
         ]
+        
         for uz_word, en_translation, level in words:
             db_execute(
                 conn, engine,
@@ -208,7 +293,6 @@ def seed_vocab():
             )
         conn.commit()
     conn.close()
-
 
 init_db()
 seed_vocab()
@@ -360,220 +444,4 @@ QUESTIONS = [
     # --- Grammar: present tense / to be ---
     {"id": 3,  "question": "\u201cI ___ to school every day.\u201d",             "options": ["go", "goes", "going", "went"],         "answer": 0},
     {"id": 4,  "question": "\u201cShe ___ a doctor.\u201d",                      "options": ["am", "is", "are", "be"],                "answer": 1},
-    {"id": 5,  "question": "\u201cThey ___ playing football now.\u201d",          "options": ["is", "am", "are", "be"],                "answer": 2},
-    {"id": 28, "question": "\u201cShe ___ reading a book right now.\u201d",       "options": ["am", "is", "are", "be"],                "answer": 1},
-    {"id": 44, "question": "\u201cThe book ___ on the table.\u201d",              "options": ["am", "is", "are", "be"],                "answer": 1},
-
-    # --- Grammar: past tense ---
-    {"id": 7,  "question": "Choose the correct past tense of \u201cGO\u201d",    "options": ["Goed", "Gone", "Went", "Going"],        "answer": 2},
-    {"id": 27, "question": "Choose the past tense of \u201cBUY\u201d",           "options": ["Buyed", "Bought", "Buying", "Buys"],    "answer": 1},
-    {"id": 39, "question": "Choose the past tense of \u201cTEACH\u201d",         "options": ["Teached", "Taught", "Teaching", "Teachs"], "answer": 1},
-    {"id": 55, "question": "Choose the past tense of \u201cSWIM\u201d",          "options": ["Swimmed", "Swam", "Swimming", "Swum"],  "answer": 1},
-
-    # --- Grammar: past participle ---
-    {"id": 20, "question": "Choose the past participle of \u201cEAT\u201d",      "options": ["Ate", "Eaten", "Eating", "Eats"],       "answer": 1},
-    {"id": 49, "question": "Choose the past participle of \u201cWRITE\u201d",    "options": ["Wrote", "Written", "Writing", "Writes"],"answer": 1},
-
-    # --- Grammar: comparatives / superlatives ---
-    {"id": 8,  "question": "\u201cThis is the ___ book I have ever read.\u201d",  "options": ["best", "gooder", "more good", "goodest"],  "answer": 0},
-    {"id": 18, "question": "Choose the comparative form of \u201cGOOD\u201d",     "options": ["Gooder", "Best", "Better", "More good"],    "answer": 2},
-    {"id": 37, "question": "\u201cShe is ___ than her sister.\u201d",             "options": ["tall", "taller", "tallest", "more tall"],   "answer": 1},
-
-    # --- Grammar: prepositions / articles ---
-    {"id": 9,  "question": "\u201cThe cat is ___ the table.\u201d",               "options": ["on", "at", "for", "into"],              "answer": 0},
-    {"id": 10, "question": "\u201c___ apple a day keeps the doctor away.\u201d",  "options": ["A", "An", "The", "Some"],               "answer": 1},
-    {"id": 56, "question": "\u201c___ cat is on the roof.\u201d",                 "options": ["A", "An", "The", "Some"],               "answer": 2},
-
-    # --- Grammar: adverbs / modifiers ---
-    {"id": 23, "question": "\u201cHe has ___ finished his homework.\u201d",       "options": ["already", "ago", "yesterday", "next"],  "answer": 0},
-    {"id": 34, "question": "\u201cHe speaks English very ___.\u201d",             "options": ["good", "well", "best", "nice"],         "answer": 1},
-    {"id": 36, "question": "\u201cI have ___ been to Paris.\u201d",               "options": ["never", "ever", "ago", "yesterday"],    "answer": 0},
-
-    # --- Grammar: perfect tenses / conditionals ---
-    {"id": 31, "question": "\u201cIf I ___ you, I would study harder.\u201d",     "options": ["am", "were", "was", "is"],              "answer": 1},
-    {"id": 40, "question": "\u201cWe ___ dinner when the phone rang.\u201d",      "options": ["have", "were having", "has", "had have"], "answer": 1},
-    {"id": 46, "question": "\u201c___ you ever visited London?\u201d",            "options": ["Have", "Has", "Did", "Do"],             "answer": 0},
-    {"id": 52, "question": "\u201cHe ___ his homework before dinner.\u201d",      "options": ["finished", "had finished", "finishes", "finishing"], "answer": 1},
-    {"id": 59, "question": "\u201cShe ___ here since 2020.\u201d",               "options": ["is", "has been", "was", "were"],        "answer": 1},
-
-    # --- Grammar: pronouns / homophones ---
-    {"id": 25, "question": "\u201c___ going to the party tonight.\u201d",         "options": ["Their", "There", "They're", "Them"],    "answer": 2},
-    {"id": 50, "question": "\u201cShe asked me ___ I was going.\u201d",           "options": ["were", "where", "wear", "we're"],       "answer": 1},
-
-    # --- Plurals ---
-    {"id": 6,  "question": "Choose the correct plural of \u201cCHILD\u201d",     "options": ["Childs", "Childes", "Children", "Childrens"], "answer": 2},
-    {"id": 19, "question": "Choose the plural of \u201cMOUSE\u201d",             "options": ["Mouses", "Mices", "Mice", "Mouse"],      "answer": 2},
-    {"id": 33, "question": "Choose the plural of \u201cTOOTH\u201d",             "options": ["Tooths", "Teeth", "Toothes", "Teeths"],  "answer": 1},
-
-    # --- Spelling ---
-    {"id": 11, "question": "Choose the correct spelling",                         "options": ["Recieve", "Receeve", "Receive", "Receve"], "answer": 2},
-    {"id": 45, "question": "Choose the correct spelling",                         "options": ["Neccessary", "Necessary", "Necesary", "Neccesary"], "answer": 1},
-
-    # --- Idioms ---
-    {"id": 24, "question": "\u201cBreak the ice\u201d means\u2026",              "options": ["To fight", "To start a conversation", "To cool down", "To leave quickly"], "answer": 1},
-    {"id": 43, "question": "\u201cA piece of cake\u201d means\u2026",            "options": ["A dessert", "Something very easy", "A reward", "A surprise"], "answer": 1},
-    {"id": 57, "question": "\u201cUnder the weather\u201d means\u2026",          "options": ["Outside", "Feeling sick", "In the rain", "Very cold"],  "answer": 1},
-]
-QUESTIONS_BY_ID = {q["id"]: q for q in QUESTIONS}
-
-
-@app.route("/api/question")
-@login_required
-def get_question():
-    last_id = session.get("last_id")
-    choices = [q for q in QUESTIONS if q["id"] != last_id] or QUESTIONS
-    picked = random.choice(choices)
-    session["last_id"] = picked["id"]
-
-    return jsonify({
-        "id": picked["id"],
-        "question": picked["question"],
-        "options": picked["options"],
-    })
-
-
-@app.route("/api/check", methods=["POST"])
-@login_required
-def check_answer():
-    data = request.get_json(silent=True) or {}
-    qid = data.get("id")
-    selected = data.get("selected")
-
-    question = QUESTIONS_BY_ID.get(qid)
-    if question is None:
-        return jsonify({"error": "unknown question"}), 400
-
-    correct = isinstance(selected, int) and selected == question["answer"]
-    return jsonify({
-        "correct": correct,
-        "correctIndex": question["answer"],
-        "correctText": question["options"][question["answer"]],
-    })
-
-
-@app.route("/api/save-score", methods=["POST"])
-@login_required
-def save_score():
-    data = request.get_json(silent=True) or {}
-    try:
-        points = int(data.get("score", 0))
-    except (TypeError, ValueError):
-        points = 0
-    points = max(0, points)
-
-    new_total = add_to_user_score(session["user"]["id"], points)
-    if new_total is not None:
-        session["user"]["total_score"] = new_total
-
-    return jsonify({"status": "ok", "total_score": new_total})
-
-
-# -----------------------------------------------------------------------
-# 8. Level-up API
-# -----------------------------------------------------------------------
-@app.route("/api/level-up", methods=["POST"])
-@login_required
-def level_up():
-    data = request.get_json(silent=True) or {}
-    try:
-        completed_level = int(data.get("level", 0))
-    except (TypeError, ValueError):
-        return jsonify({"error": "invalid level"}), 400
-
-    user_id = session["user"]["id"]
-    fresh = get_user_by_id(user_id)
-    if not fresh:
-        return jsonify({"error": "user not found"}), 404
-
-    # Only allow leveling up from the user's current level
-    if completed_level < 1 or completed_level > 10:
-        return jsonify({"error": "invalid level"}), 400
-
-    next_level = min(completed_level + 1, 10)
-    new_level = update_user_level(user_id, next_level)
-    session["user"]["current_level"] = new_level
-
-    return jsonify({"status": "ok", "current_level": new_level})
-
-
-# -----------------------------------------------------------------------
-# 9. Leaderboard API
-# -----------------------------------------------------------------------
-@app.route("/api/leaderboard")
-@login_required
-def leaderboard():
-    conn, engine = get_db()
-    cur = db_execute(conn, engine,
-        "SELECT name, picture, total_score, current_level FROM users ORDER BY total_score DESC LIMIT 10"
-    )
-    rows = cur.fetchall()
-    conn.close()
-
-    result = []
-    for row in rows:
-        r = dict(row)
-        result.append({
-            "name": r["name"],
-            "picture": r["picture"],
-            "total_score": r["total_score"],
-            "current_level": r["current_level"],
-        })
-
-    return jsonify(result)
-
-
-# -----------------------------------------------------------------------
-# 10. Games & Word Matching routes
-# -----------------------------------------------------------------------
-@app.route('/games')
-def games_page():
-    user = session.get('user')
-    if not user:
-        return redirect(url_for('login'))
-    fresh = get_user_by_id(user['id'])
-    if fresh:
-        session['user']['total_score'] = fresh['total_score']
-        session['user']['current_level'] = fresh['current_level']
-        user = session['user']
-    return render_template('index.html', user=user, active_page='games')
-
-
-@app.route('/games/match')
-def match_game_page():
-    user = session.get('user')
-    if not user:
-        return redirect(url_for('login'))
-    fresh = get_user_by_id(user['id'])
-    if fresh:
-        session['user']['total_score'] = fresh['total_score']
-        session['user']['current_level'] = fresh['current_level']
-        user = session['user']
-    return render_template('index.html', user=user, active_page='match_game')
-
-
-@app.route('/api/vocab')
-@login_required
-def get_vocab():
-    level = request.args.get('level', 1, type=int)
-    level = max(1, min(level, 5))
-    conn, engine = get_db()
-    cur = db_execute(conn, engine,
-        'SELECT id, uz_word, en_translation FROM vocab WHERE level = ? ORDER BY RANDOM() LIMIT 4',
-        (level,)
-    )
-    rows = cur.fetchall()
-    conn.close()
-    words = [dict(r) for r in rows]
-    # Also provide all translations from this level for wrong options
-    conn2, engine2 = get_db()
-    cur2 = db_execute(conn2, engine2,
-        'SELECT DISTINCT en_translation FROM vocab WHERE level = ?',
-        (level,)
-    )
-    all_translations = [dict(r)['en_translation'] for r in cur2.fetchall()]
-    conn2.close()
-    return jsonify({'words': words, 'all_translations': all_translations, 'level': level})
-
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    {"id": 5,  "question": "\u201cThey
