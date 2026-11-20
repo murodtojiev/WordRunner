@@ -58,19 +58,28 @@
     scoreEl.textContent = '0';
     levelNumEl.textContent = level;
     completeOverlay.classList.add('hidden');
-    board.innerHTML = '<div class="match-loading">So'zlar yuklanmoqda...</div>';
+    board.innerHTML = '<div class="match-loading">Yuklanmoqda...</div>';
 
-    fetch(`/api/vocab?level=${level}`)
-      .then(r => r.json())
-      .then(data => {
+    fetch('/api/vocab?level=' + level)
+      .then(function(r) {
+        if (!r.ok) {
+          throw new Error('Server xatosi: ' + r.status);
+        }
+        return r.json();
+      })
+      .then(function(data) {
+        if (data.error || !data.words || data.words.length === 0) {
+          board.innerHTML = '<div class="match-loading">So\'zlar topilmadi. Boshqa bosqichni tanlang.</div>';
+          return;
+        }
         gameWords = data.words;
         totalCards = gameWords.length;
-        matchCountEl.textContent = `0 / ${totalCards}`;
+        matchCountEl.textContent = '0 / ' + totalCards;
         renderBoard(data.words, data.all_translations);
       })
-      .catch(err => {
-        board.innerHTML = '<div class="match-loading">Xatolik. Qayta urinib ko'ring.</div>';
-        console.error(err);
+      .catch(function(err) {
+        board.innerHTML = '<div class="match-loading">Xatolik: ' + err.message + '. Sahifani yangilang.</div>';
+        console.error('Vocab fetch error:', err);
       });
   }
 
@@ -90,7 +99,7 @@
     words.forEach((word, i) => {
       const uzCard = document.createElement('button');
       uzCard.className = 'match-card match-card-uz';
-      uzCard.innerHTML = `<span class="match-card-text">${word.uz_word}</span><span class="match-card-lang">🇺🇿 O'zbekcha</span>`;
+      uzCard.innerHTML = '<span class="match-card-text">' + word.uz_word + '</span><span class="match-card-lang">O\'zbekcha</span>';
       uzCard.dataset.id = word.id;
       uzCard.dataset.answer = word.en_translation;
       uzCard.addEventListener('click', () => selectUzCard(uzCard));
@@ -100,7 +109,7 @@
     shuffledEn.forEach((word, i) => {
       const enCard = document.createElement('button');
       enCard.className = 'match-card match-card-en';
-      enCard.innerHTML = `<span class="match-card-text">${word.en_translation}</span><span class="match-card-lang">🇬🇧 English</span>`;
+      enCard.innerHTML = '<span class="match-card-text">' + word.en_translation + '</span><span class="match-card-lang">English</span>';
       enCard.dataset.translation = word.en_translation;
       enCard.addEventListener('click', () => selectEnCard(enCard));
       enColumn.appendChild(enCard);
@@ -139,7 +148,7 @@
       score += 25;
       matchedCount++;
       scoreEl.textContent = score;
-      matchCountEl.textContent = `${matchedCount} / ${totalCards}`;
+      matchCountEl.textContent = matchedCount + ' / ' + totalCards;
 
       // Animate disappearance
       setTimeout(() => {
@@ -179,9 +188,9 @@
     }).catch(console.error);
 
     if (currentLevel >= 5) {
-      nextLevelBtn.textContent = '🏠 O\'yinlarga qaytish';
+      nextLevelBtn.textContent = 'O\'yinlarga qaytish';
     } else {
-      nextLevelBtn.textContent = 'Keyingi bosqich →';
+      nextLevelBtn.textContent = 'Keyingi bosqich \u2192';
     }
   }
 

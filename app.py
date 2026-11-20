@@ -753,23 +753,30 @@ def match_game_page():
 def get_vocab():
     level = request.args.get('level', 1, type=int)
     level = max(1, min(level, 5))
-    conn, engine = get_db()
-    cur = db_execute(conn, engine,
-        'SELECT id, uz_word, en_translation FROM vocab WHERE level = ? ORDER BY RANDOM() LIMIT 4',
-        (level,)
-    )
-    rows = cur.fetchall()
-    conn.close()
-    words = [dict(r) for r in rows]
-    # Also provide all translations from this level for wrong options
-    conn2, engine2 = get_db()
-    cur2 = db_execute(conn2, engine2,
-        'SELECT DISTINCT en_translation FROM vocab WHERE level = ?',
-        (level,)
-    )
-    all_translations = [dict(r)['en_translation'] for r in cur2.fetchall()]
-    conn2.close()
-    return jsonify({'words': words, 'all_translations': all_translations, 'level': level})
+    try:
+        conn, engine = get_db()
+        cur = db_execute(conn, engine,
+            'SELECT id, uz_word, en_translation FROM vocab WHERE level = ? ORDER BY RANDOM() LIMIT 4',
+            (level,)
+        )
+        rows = cur.fetchall()
+        words = [dict(r) for r in rows]
+
+        # Also provide all translations from this level for wrong options
+        cur2 = db_execute(conn, engine,
+            'SELECT DISTINCT en_translation FROM vocab WHERE level = ?',
+            (level,)
+        )
+        all_translations = [dict(r)['en_translation'] for r in cur2.fetchall()]
+        conn.close()
+
+        if not words:
+            return jsonify({'error': 'No words found for this level', 'words': [], 'all_translations': [], 'level': level})
+
+        return jsonify({'words': words, 'all_translations': all_translations, 'level': level})
+    except Exception as e:
+        print(f'Vocab API error: {e}')
+        return jsonify({'error': str(e), 'words': [], 'all_translations': [], 'level': level}), 500
 
 
 if __name__ == "__main__":
