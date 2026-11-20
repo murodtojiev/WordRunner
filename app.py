@@ -967,7 +967,7 @@ def api_chat():
         'contents': contents,
         'generationConfig': {
             'temperature': 0.7,
-            'maxOutputTokens': 600
+            'maxOutputTokens': 2048
         }
     }
 
@@ -976,33 +976,54 @@ def api_chat():
         'x-goog-api-key': api_key
     }
 
-    primary_model = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
-    fallback_model = 'gemini-1.5-flash'
+    # Model zanjiri: Google eski modellarni muntazam o'chirib turadi (404 NOT_FOUND),
+    # shuning uchun bir nechta nomni ketma-ket sinaymiz. Birinchisi ishlasa to'xtaymiz.
+    env_model = os.getenv('GEMINI_MODEL', '').strip()
+    model_chain = [m for m in [
+        env_model,                 # Render env'da berilgan model (ixtiyoriy)
+        'gemini-3.6-flash',        # joriy barqaror Flash
+        'gemini-flash-latest',     # Google o'zi eng so'nggi Flash'ga yo'naltiradigan alias
+        'gemini-3.5-flash',
+        'gemini-3.5-flash-lite',
+    ] if m]
+    # takrorlarni olib tashlash (tartibni saqlagan holda)
+    model_chain = list(dict.fromkeys(model_chain))
 
     def call_gemini(model_name):
         url = f'https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent'
         return requests.post(url, json=payload, headers=headers, timeout=25)
 
     try:
-        resp = call_gemini(primary_model)
-        if resp.status_code in (404, 429, 503):
-            print(f'[chat] Primary model {primary_model} returned {resp.status_code}, trying fallback.')
-            resp = call_gemini(fallback_model)
+        resp = None
+        for model_name in model_chain:
+            resp = call_gemini(model_name)
+            if resp.status_code == 200:
+                print(f'[chat] OK model={model_name}')
+                break
+            print(f'[chat] model={model_name} status={resp.status_code}: {resp.text[:200]}')
+            # 400/401/403 -> kalit yoki so'rov muammosi, boshqa model yordam bermaydi
+            if resp.status_code not in (404, 429, 500, 503):
+                break
 
-        if resp.status_code != 200:
-            print(f'[chat] Gemini API error {resp.status_code}: {resp.text[:300]}')
+        if resp is None or resp.status_code != 200:
+            code = resp.status_code if resp is not None else 'n/a'
+            print(f'[chat] Gemini API error {code}')
             return jsonify({'error': 'AI xizmatida xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.'}), 502
 
         result = resp.json()
-        reply_text = (
-            result
-            .get('candidates', [{}])[0]
+        parts = (
+            (result.get('candidates') or [{}])[0]
             .get('content', {})
-            .get('parts', [{}])[0]
-            .get('text', '')
+            .get('parts', [])
+        )
+        # "thought" qismlarini o'tkazib yuborib, faqat javob matnini yig'amiz
+        reply_text = ''.join(
+            p.get('text', '') for p in parts if not p.get('thought')
         ).strip()
 
         if not reply_text:
+            print(f'[chat] Empty reply, finishReason='
+                  f'{(result.get("candidates") or [{}])[0].get("finishReason")}')
             return jsonify({'error': 'AI bo\'sh javob qaytardi. Iltimos, boshqacha savol bering.'}), 502
 
         return jsonify({'reply': reply_text})
