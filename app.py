@@ -976,8 +976,8 @@ def api_chat():
         'x-goog-api-key': api_key
     }
 
-    primary_model = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash-lite')
-    fallback_model = 'gemini-2.0-flash'
+    primary_model = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+    fallback_model = 'gemini-1.5-flash'
 
     def call_gemini(model_name):
         url = f'https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent'
@@ -985,7 +985,7 @@ def api_chat():
 
     try:
         resp = call_gemini(primary_model)
-        if resp.status_code in (404, 503):
+        if resp.status_code in (404, 429, 503):
             print(f'[chat] Primary model {primary_model} returned {resp.status_code}, trying fallback.')
             resp = call_gemini(fallback_model)
 
