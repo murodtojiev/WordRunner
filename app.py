@@ -11,6 +11,7 @@ Features:
 """
 
 import os
+import json
 import random
 from functools import wraps
 
@@ -20,7 +21,7 @@ from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, Json
 
 # -----------------------------------------------------------------------
 # 1. Load secrets from .env
@@ -29,6 +30,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -76,6 +79,54 @@ def init_db():
             level INTEGER DEFAULT 1
         )
     """)
+    db_execute(conn, engine, "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ")
+    db_execute(conn, engine, """
+        CREATE TABLE IF NOT EXISTS questions (
+            id SERIAL PRIMARY KEY,
+            question TEXT NOT NULL,
+            options JSONB NOT NULL,
+            answer INTEGER NOT NULL,
+            category VARCHAR(30) DEFAULT 'grammar'
+        )
+    """)
+    db_execute(conn, engine, """
+        CREATE TABLE IF NOT EXISTS level_plays (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER,
+            game VARCHAR(20) NOT NULL,
+            level INTEGER NOT NULL,
+            played_at TIMESTAMPTZ DEFAULT now()
+        )
+    """)
+    db_execute(conn, engine, """
+        CREATE TABLE IF NOT EXISTS blocked_emails (
+            email VARCHAR(255) PRIMARY KEY,
+            blocked_at TIMESTAMPTZ DEFAULT now()
+        )
+    """)
+    db_execute(conn, engine, """
+        CREATE TABLE IF NOT EXISTS meta (
+            key VARCHAR(50) PRIMARY KEY,
+            value TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def is_email_blocked(email):
+    if not email:
+        return False
+    conn, engine = get_db()
+    cur = db_execute(conn, engine, "SELECT 1 FROM blocked_emails WHERE email = ?", (email.lower(),))
+    found = cur.fetchone() is not None
+    conn.close()
+    return found
+
+
+def touch_last_active(user_id):
+    conn, engine = get_db()
+    db_execute(conn, engine, "UPDATE users SET last_active = now() WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
 
@@ -157,7 +208,13 @@ def seed_vocab():
     if isinstance(count, dict):
         count = list(row.values())[0]
 
-    # Only seed if table is empty or has old data (< 200 rows)
+    cur = db_execute(conn, engine, "SELECT 1 FROM meta WHERE key = 'vocab_seeded'")
+    already_seeded = cur.fetchone() is not None
+    if already_seeded:
+        conn.close()
+        return
+
+    # First run after admin-panel upgrade: seed only if table is empty or has old data (< 200 rows)
     if count < 200:
         # Clear old data first
         db_execute(conn, engine, "DELETE FROM vocab")
@@ -404,11 +461,10 @@ def seed_vocab():
                 (uz_word, en_translation, level),
             )
         conn.commit()
+    db_execute(conn, engine, "INSERT INTO meta (key, value) VALUES ('vocab_seeded', '1') ON CONFLICT DO NOTHING")
+    conn.commit()
     conn.close()
 
-
-init_db()
-seed_vocab()
 
 
 # -----------------------------------------------------------------------
@@ -432,6 +488,9 @@ def login_required(view_func):
     def wrapped(*args, **kwargs):
         if "user" not in session:
             return jsonify({"error": "login required"}), 401
+        if get_user_by_id(session["user"]["id"]) is None:
+            session.clear()
+            return jsonify({"error": "login required"}), 401
         return view_func(*args, **kwargs)
     return wrapped
 
@@ -453,6 +512,10 @@ def authorize():
     if not user_info:
         user_info = google.get("https://openidconnect.googleapis.com/v1/userinfo").json()
 
+    if is_email_blocked(user_info.get("email")):
+        session.clear()
+        return "Bu hisob uchun kirish taqiqlangan.", 403
+
     user = get_or_create_user(
         google_id=user_info["sub"],
         name=user_info.get("name"),
@@ -467,7 +530,9 @@ def authorize():
         "picture": user["picture"],
         "total_score": user["total_score"],
         "current_level": user["current_level"],
+        "email_verified": bool(user_info.get("email_verified", False)),
     }
+    touch_last_active(user["id"])
 
     return redirect(url_for("index"))
 
@@ -522,7 +587,7 @@ def leaderboard_page():
 # -----------------------------------------------------------------------
 # 7. Game API — English Runner question bank (login-gated)
 # -----------------------------------------------------------------------
-QUESTIONS = [
+SEED_QUESTIONS = [
     # --- Synonyms ---
     {"id": 1,  "question": "Choose the synonym of \u201cHAPPY\u201d",           "options": ["Joyful", "Angry", "Tired", "Silent"],       "answer": 0},
     {"id": 12, "question": "Choose the synonym of \u201cBIG\u201d",             "options": ["Tiny", "Large", "Narrow", "Short"],          "answer": 1},
@@ -611,17 +676,63 @@ QUESTIONS = [
     {"id": 43, "question": "\u201cA piece of cake\u201d means\u2026",            "options": ["A dessert", "Something very easy", "A reward", "A surprise"], "answer": 1},
     {"id": 57, "question": "\u201cUnder the weather\u201d means\u2026",          "options": ["Outside", "Feeling sick", "In the rain", "Very cold"],  "answer": 1},
 ]
-QUESTIONS_BY_ID = {q["id"]: q for q in QUESTIONS}
+
+
+def categorize_question(text):
+    t = text.lower()
+    if "synonym" in t: return "synonym"
+    if "antonym" in t: return "antonym"
+    if "most nearly means" in t: return "vocabulary"
+    if "plural" in t: return "plural"
+    if "spelling" in t: return "spelling"
+    if "means" in t: return "idiom"
+    return "grammar"
+
+
+def seed_questions():
+    """Copies the built-in question bank into the DB once (admin edits persist afterwards)."""
+    conn, engine = get_db()
+    cur = db_execute(conn, engine, "SELECT 1 FROM meta WHERE key = 'questions_seeded'")
+    if cur.fetchone() is None:
+        cur = db_execute(conn, engine, "SELECT COUNT(*) AS cnt FROM questions")
+        if cur.fetchone()["cnt"] == 0:
+            for q in sorted(SEED_QUESTIONS, key=lambda x: x["id"]):
+                db_execute(
+                    conn, engine,
+                    "INSERT INTO questions (id, question, options, answer, category) VALUES (?, ?, ?, ?, ?)",
+                    (q["id"], q["question"], Json(q["options"]), q["answer"], categorize_question(q["question"])),
+                )
+            db_execute(conn, engine,
+                "SELECT setval(pg_get_serial_sequence('questions', 'id'), (SELECT MAX(id) FROM questions))")
+        db_execute(conn, engine, "INSERT INTO meta (key, value) VALUES ('questions_seeded', '1') ON CONFLICT DO NOTHING")
+        conn.commit()
+    conn.close()
+
+
+init_db()
+seed_vocab()
+seed_questions()
 
 
 @app.route("/api/question")
 @login_required
 def get_question():
-    last_id = session.get("last_id")
-    choices = [q for q in QUESTIONS if q["id"] != last_id] or QUESTIONS
-    picked = random.choice(choices)
-    session["last_id"] = picked["id"]
+    last_id = session.get("last_id") or 0
+    conn, engine = get_db()
+    try:
+        cur = db_execute(conn, engine,
+            "SELECT id, question, options FROM questions WHERE id != ? ORDER BY RANDOM() LIMIT 1", (last_id,))
+        picked = cur.fetchone()
+        if picked is None:
+            cur = db_execute(conn, engine, "SELECT id, question, options FROM questions ORDER BY RANDOM() LIMIT 1")
+            picked = cur.fetchone()
+    finally:
+        conn.close()
 
+    if picked is None:
+        return jsonify({"error": "no questions"}), 404
+
+    session["last_id"] = picked["id"]
     return jsonify({
         "id": picked["id"],
         "question": picked["question"],
@@ -636,7 +747,14 @@ def check_answer():
     qid = data.get("id")
     selected = data.get("selected")
 
-    question = QUESTIONS_BY_ID.get(qid)
+    if not isinstance(qid, int):
+        return jsonify({"error": "unknown question"}), 400
+    conn, engine = get_db()
+    try:
+        cur = db_execute(conn, engine, "SELECT options, answer FROM questions WHERE id = ?", (qid,))
+        question = cur.fetchone()
+    finally:
+        conn.close()
     if question is None:
         return jsonify({"error": "unknown question"}), 400
 
@@ -646,6 +764,29 @@ def check_answer():
         "correctIndex": question["answer"],
         "correctText": question["options"][question["answer"]],
     })
+
+
+@app.route("/api/track-play", methods=["POST"])
+@login_required
+def track_play():
+    """Records that the user started a level (used for admin statistics)."""
+    data = request.get_json(silent=True) or {}
+    game = data.get("game")
+    try:
+        level = int(data.get("level", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid level"}), 400
+    if game not in ("runner", "match") or level < 1 or level > 10:
+        return jsonify({"error": "invalid input"}), 400
+
+    conn, engine = get_db()
+    db_execute(conn, engine,
+        "INSERT INTO level_plays (user_id, game, level) VALUES (?, ?, ?)",
+        (session["user"]["id"], game, level))
+    db_execute(conn, engine, "UPDATE users SET last_active = now() WHERE id = ?", (session["user"]["id"],))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/save-score", methods=["POST"])
@@ -659,6 +800,7 @@ def save_score():
     points = max(0, points)
 
     new_total = add_to_user_score(session["user"]["id"], points)
+    touch_last_active(session["user"]["id"])
     if new_total is not None:
         session["user"]["total_score"] = new_total
 
@@ -777,6 +919,19 @@ def get_vocab():
     except Exception as e:
         print(f'Vocab API error: {e}')
         return jsonify({'error': str(e), 'words': [], 'all_translations': [], 'level': level}), 500
+
+
+# -----------------------------------------------------------------------
+# 11. Admin panel (see admin.py)
+# -----------------------------------------------------------------------
+from admin import register_admin, is_admin_session
+
+register_admin(app, get_db, db_execute)
+
+
+@app.context_processor
+def inject_admin_flag():
+    return {"is_admin": is_admin_session()}
 
 
 if __name__ == "__main__":

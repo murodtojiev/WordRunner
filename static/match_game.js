@@ -52,6 +52,11 @@
   }
 
   function startLevel(level) {
+    fetch('/api/track-play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'match', level: level }),
+    }).catch(function() {});
     score = 0;
     matchedCount = 0;
     selectedUzCard = null;

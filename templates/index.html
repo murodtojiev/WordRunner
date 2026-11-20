@@ -32,6 +32,9 @@
         {% else %}
           <a href="/login" class="nav-link">O'yinlar</a>
         {% endif %}
+        {% if is_admin %}
+          <a href="/admin" class="nav-link">🛡️ Admin</a>
+        {% endif %}
       </div>
 
       <div class="nav-user-area">

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin — WordRunner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <a href="/admin" class="brand">
+      <span class="brand-icon">🏃</span>
+      <span class="brand-text">WORD<span>RUNNER</span></span>
+      <span class="brand-tag">ADMIN</span>
+    </a>
+
+    <nav class="side-nav">
+      <a href="#dashboard" class="side-link" data-page="dashboard"><span class="ico">📊</span>Dashboard</a>
+      <a href="#users" class="side-link" data-page="users"><span class="ico">👥</span>Foydalanuvchilar</a>
+      <a href="#questions" class="side-link" data-page="questions"><span class="ico">📝</span>Savollar</a>
+      <a href="#vocab" class="side-link" data-page="vocab"><span class="ico">🔤</span>Lug'at</a>
+    </nav>
+
+    <div class="side-footer">
+      <div class="admin-card">
+        {% if admin.picture %}<img src="{{ admin.picture }}" alt="" referrerpolicy="no-referrer">{% endif %}
+        <div>
+          <div class="admin-name">{{ admin.name }}</div>
+          <div class="admin-mail">{{ admin.email }}</div>
+        </div>
+      </div>
+      <a href="/" class="side-link small"><span class="ico">🎮</span>Saytga qaytish</a>
+      <a href="/logout" class="side-link small danger"><span class="ico">🚪</span>Chiqish</a>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" id="burger" aria-label="Menyu">☰</button>
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </header>
+
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <section class="page" id="page-dashboard">
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h2>Bosqichlar bo'yicha o'yinlar</h2>
+              <div class="seg" id="playsSeg">
+                <button data-game="runner" class="active">English Runner</button>
+                <button data-game="match">So'z topish</button>
+              </div>
+            </div>
+            <div id="playsChart" class="bars"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>O'yinchilar bosqichlar kesimida</h2></div>
+            <div id="levelsChart" class="bars"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>🏆 Top 5 o'yinchi</h2></div>
+          <div id="topPlayers" class="top-list"></div>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="page" id="page-users">
+        <div class="toolbar">
+          <input type="search" id="userSearch" placeholder="Ism yoki email bo'yicha qidirish…">
+          <select id="userSort">
+            <option value="score">Ball bo'yicha</option>
+            <option value="level">Bosqich bo'yicha</option>
+            <option value="recent">Oxirgi faollik</option>
+            <option value="name">Ism (A–Z)</option>
+          </select>
+          <span class="count" id="userCount"></span>
+        </div>
+        <div class="card table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>O'yinchi</th><th>Email</th><th class="num">Ball</th><th class="num">Bosqich</th><th>Oxirgi faollik</th><th class="actions-col">Amallar</th></tr></thead>
+              <tbody id="userRows"></tbody>
+            </table>
+          </div>
+          <div class="pager" id="userPager"></div>
+        </div>
+        <div class="card" id="blockedCard" hidden>
+          <div class="card-head"><h2>🚫 Bloklangan emaillar</h2></div>
+          <div id="blockedList" class="chips"></div>
+        </div>
+      </section>
+
+      <!-- QUESTIONS -->
+      <section class="page" id="page-questions">
+        <div class="toolbar">
+          <input type="search" id="qSearch" placeholder="Savol matni bo'yicha qidirish…">
+          <select id="qCategory"></select>
+          <span class="count" id="qCount"></span>
+        </div>
+        <div class="card table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Savol</th><th>Kategoriya</th><th>Variantlar</th><th class="actions-col">Amallar</th></tr></thead>
+              <tbody id="qRows"></tbody>
+            </table>
+          </div>
+          <div class="pager" id="qPager"></div>
+        </div>
+      </section>
+
+      <!-- VOCAB -->
+      <section class="page" id="page-vocab">
+        <div class="toolbar">
+          <input type="search" id="vSearch" placeholder="So'z bo'yicha qidirish (o'zbekcha yoki inglizcha)…">
+          <span class="count" id="vCount"></span>
+        </div>
+        <div class="level-tabs" id="vLevelTabs"></div>
+        <div class="card table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>O'zbekcha</th><th>Inglizcha</th><th class="num">Bosqich</th><th class="actions-col">Amallar</th></tr></thead>
+              <tbody id="vRows"></tbody>
+            </table>
+          </div>
+          <div class="pager" id="vPager"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head"><h3 id="modalTitle"></h3><button class="x" id="modalClose" aria-label="Yopish">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+  window.ADMIN_CATEGORIES = {{ categories | tojson }};
+</script>
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>

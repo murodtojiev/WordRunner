@@ -387,6 +387,7 @@
   async function fetchQuestion() {
     try {
       const res = await fetch('/api/question');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       currentQuestion = data;
       showQuestionUI(data);
@@ -791,6 +792,11 @@
   // =====================================================================
   function startLevel(level) {
     playingLevel = level;
+    fetch('/api/track-play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'runner', level: level }),
+    }).catch(() => {});
     showGame();
     if (gameOverScreen) gameOverScreen.classList.add('hidden');
     if (levelCompleteScreen) levelCompleteScreen.classList.add('hidden');

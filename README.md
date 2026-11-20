@@ -51,3 +51,18 @@ templates/index.html  # Login gate OR game UI, depending on session
 static/style.css      # English Runner theme + auth bar styling
 static/script.js      # Game loop; posts score to /api/save-score on game over
 ```
+
+## Admin panel
+
+`/admin` — faqat `ADMIN_EMAILS` (env, vergul bilan ajratilgan; standart: `murodtojievuz@gmail.com`)
+ro'yxatidagi Google akkaunt kira oladi. Boshqalar uchun sahifa 404 qaytaradi.
+
+- **Dashboard** — jami o'yinchilar, bugungi faollar, o'rtacha ball, eng ko'p o'ynalgan bosqich
+- **Foydalanuvchilar** — qidirish, ballni nolga tushirish, bosqichni o'zgartirish, o'chirish (+ bloklash)
+- **Savollar** — English Runner savollarini qo'shish / tahrirlash / o'chirish (DB `questions` jadvali)
+- **Lug'at** — so'z juftliklari, bosqich bo'yicha filter (DB `vocab` jadvali)
+
+Eslatma: savollar va lug'at birinchi ishga tushishda bir marta bazaga ko'chiriladi
+(`meta` jadvali bayrog'i), shuning uchun admin o'chirgan narsalar qayta tiklanmaydi.
+
+Files: `admin.py`, `templates/admin.html`, `static/admin.css`, `static/admin.js`
