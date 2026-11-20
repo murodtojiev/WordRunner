@@ -37,10 +37,11 @@
 
   // AI Chatbot elements
   const toggleAiChat = document.getElementById('toggleAiChat');
-  const closeAiChat = document.getElementById('closeAiChat');
+  const closeAiChat  = document.getElementById('closeAiChat');
+  const clearAiChat  = document.getElementById('clearAiChat');
   const aiChatWindow = document.getElementById('aiChatWindow');
-  const chatForm = document.getElementById('chatForm');
-  const chatInput = document.getElementById('chatInput');
+  const chatForm     = document.getElementById('chatForm');
+  const chatInput    = document.getElementById('chatInput');
   const chatMessages = document.getElementById('chatMessages');
 
   // =====================================================================
@@ -171,13 +172,21 @@
   }
 
   // =====================================================================
-  // 6. AI Chatbot Widget
+  // 6. AI Chatbot Widget — real Gemini API integration
   // =====================================================================
+  let chatHistory = []; // [{ role: 'user'|'model', text: '...' }]
+
+  const INITIAL_BOT_HTML = `<p>Salom! 👋 Men sizning <strong>AI ingliz tili o'qituvchingizman</strong>. Bugun lug'at yoki grammatikani mashq qilishda qanday yordam bera olaman?</p>`;
+
   function initAiChatbot() {
     if (!toggleAiChat || !aiChatWindow) return;
 
     toggleAiChat.addEventListener('click', () => {
       aiChatWindow.classList.toggle('hidden');
+      if (!aiChatWindow.classList.contains('hidden')) {
+        chatInput && chatInput.focus();
+        scrollChatToBottom();
+      }
     });
 
     if (closeAiChat) {
@@ -186,60 +195,171 @@
       });
     }
 
-    // Handle suggestion pills
-    document.querySelectorAll('.suggestion-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const text = btn.dataset.msg;
-        sendChatMessage(text);
+    if (clearAiChat) {
+      clearAiChat.addEventListener('click', () => {
+        chatHistory = [];
+        // Reset to initial state
+        chatMessages.innerHTML = `
+          <div class="chat-bubble bot-bubble">${INITIAL_BOT_HTML}</div>
+          <div class="chat-suggestions" id="chatSuggestions">
+            <button class="suggestion-pill" data-msg="Present Perfect tushuntir">💡 Present Perfect tushuntir</button>
+            <button class="suggestion-pill" data-msg="5 ta foydali so'z o'rgat">📚 5 ta foydali so'z o'rgat</button>
+            <button class="suggestion-pill" data-msg="Inglizcha suhbatlashamiz">🗣️ Inglizcha suhbatlashamiz</button>
+          </div>
+        `;
+        bindSuggestions();
+        setInputDisabled(false);
       });
-    });
+    }
+
+    bindSuggestions();
 
     if (chatForm) {
       chatForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const text = chatInput.value.trim();
-        if (text) {
-          sendChatMessage(text);
-          chatInput.value = '';
-        }
+        const text = (chatInput.value || '').trim();
+        if (!text) return;
+        chatInput.value = '';
+        sendChatMessage(text);
       });
     }
   }
 
-  function sendChatMessage(userText) {
-    appendChatBubble(userText, 'user');
-    
-    // Hide suggestions after first message
+  function bindSuggestions() {
+    document.querySelectorAll('.suggestion-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.dataset.msg;
+        if (text) sendChatMessage(text);
+      });
+    });
+  }
+
+  function setInputDisabled(disabled) {
+    if (chatInput)  chatInput.disabled  = disabled;
+    const sendBtn = chatForm && chatForm.querySelector('.btn-send-chat');
+    if (sendBtn) sendBtn.disabled = disabled;
+  }
+
+  function scrollChatToBottom() {
+    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  /** Escape HTML to prevent XSS */
+  function escapeForChat(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /** Format AI reply: escape HTML, then convert **bold** and newlines */
+  function formatBotReply(raw) {
+    let safe = escapeForChat(raw);
+    // **bold** => <strong>
+    safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // newlines => <br>
+    safe = safe.replace(/\n/g, '<br>');
+    return safe;
+  }
+
+  function appendUserBubble(text) {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble user-bubble';
+    bubble.innerHTML = `<p>${escapeForChat(text)}</p>`;
+    chatMessages.appendChild(bubble);
+    scrollChatToBottom();
+  }
+
+  function appendBotBubble(htmlContent) {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble bot-bubble';
+    bubble.innerHTML = `<p>${htmlContent}</p>`;
+    chatMessages.appendChild(bubble);
+    scrollChatToBottom();
+    return bubble;
+  }
+
+  function showTypingIndicator() {
+    const indicator = document.createElement('div');
+    indicator.className = 'chat-bubble bot-bubble';
+    indicator.id = 'typingIndicator';
+    indicator.innerHTML = `
+      <div class="typing-bubble">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+    `;
+    chatMessages.appendChild(indicator);
+    scrollChatToBottom();
+    return indicator;
+  }
+
+  function removeTypingIndicator() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+  }
+
+  async function sendChatMessage(userText) {
+    if (!userText) return;
+
+    // Hide suggestions on first message
     const suggestions = document.getElementById('chatSuggestions');
     if (suggestions) suggestions.style.display = 'none';
 
-    // Simulated AI response
-    setTimeout(() => {
-      const botResponse = getAiResponse(userText);
-      appendChatBubble(botResponse, 'bot');
-    }, 600);
-  }
+    appendUserBubble(userText);
+    setInputDisabled(true);
+    const typingEl = showTypingIndicator();
 
-  function appendChatBubble(text, sender) {
-    const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${sender}-bubble`;
-    bubble.innerHTML = `<p>${escapeHtml(text)}</p>`;
-    chatMessages.appendChild(bubble);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userText, history: chatHistory })
+      });
 
-  function getAiResponse(text) {
-    const t = text.toLowerCase();
-    if (t.includes('present perfect') || t.includes('past simple')) {
-      return "💡 <strong>Present Perfect</strong> connects the past to the present (e.g. 'I have visited London'). <strong>Past Simple</strong> is used for completed actions at a specific past time (e.g. 'I visited London in 2020').";
+      removeTypingIndicator();
+
+      if (res.status === 401) {
+        // Not logged in
+        const loginBubble = document.createElement('div');
+        loginBubble.className = 'chat-bubble bot-bubble chat-login-prompt';
+        loginBubble.innerHTML = `
+          Javob olish uchun Google akkauntingiz bilan kirish kerak.<br>
+          <a href="/login">🔑 Google bilan kirish</a>
+        `;
+        chatMessages.appendChild(loginBubble);
+        scrollChatToBottom();
+        setInputDisabled(false);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        appendBotBubble(`⚠️ ${escapeForChat(data.error || 'Xatolik yuz berdi.')}`);
+        setInputDisabled(false);
+        return;
+      }
+
+      const reply = data.reply || '';
+
+      // Update history
+      chatHistory.push({ role: 'user',  text: userText });
+      chatHistory.push({ role: 'model', text: reply });
+      // Keep history bounded to last 20 turns
+      if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+      appendBotBubble(formatBotReply(reply));
+
+    } catch (err) {
+      removeTypingIndicator();
+      appendBotBubble('⚠️ Tarmoq xatosi. Internet aloqangizni tekshiring va qayta urinib ko\'ring.');
+    } finally {
+      setInputDisabled(false);
+      chatInput && chatInput.focus();
     }
-    if (t.includes('synonym') || t.includes('happy')) {
-      return "📚 Synonyms for <strong>'HAPPY'</strong>: 1. Joyful 2. Delighted 3. Content 4. Cheerful!";
-    }
-    if (t.includes('level') || t.includes('advance') || t.includes('unlock')) {
-      return "🎮 To advance to the next level, click any unlocked level node on the <strong>Learning Roadmap (/map)</strong> and answer 15 words correctly!";
-    }
-    return "Great question! Keep running levels on WordRunner to build your English vocabulary and grammar mastery step by step! 🚀";
   }
 
   // =====================================================================

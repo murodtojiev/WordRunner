@@ -13,6 +13,7 @@ Features:
 import os
 import json
 import random
+import requests
 from functools import wraps
 
 from flask import Flask, render_template, redirect, url_for, session, request, jsonify
@@ -922,7 +923,100 @@ def get_vocab():
 
 
 # -----------------------------------------------------------------------
-# 11. Admin panel (see admin.py)
+# 11. AI Chat API — Gemini REST (no SDK needed, uses requests library)
+# -----------------------------------------------------------------------
+@app.route('/api/chat', methods=['POST'])
+@login_required
+def api_chat():
+    api_key = os.getenv('GEMINI_API_KEY', '').strip()
+    if not api_key:
+        return jsonify({'error': 'AI xizmat sozlanmagan. Iltimos, administrator bilan bog\'laning.'}), 500
+
+    data = request.get_json(silent=True) or {}
+    user_message = (data.get('message') or '').strip()
+    history = data.get('history', [])
+
+    if not user_message:
+        return jsonify({'error': 'Xabar bo\'sh bo\'lmasin.'}), 400
+    if len(user_message) > 1000:
+        return jsonify({'error': 'Xabar 1000 belgidan oshmasin.'}), 400
+
+    # Build contents: take up to last 8 history messages + new user turn
+    contents = []
+    for entry in (history or [])[-8:]:
+        role = entry.get('role', '')
+        text = (entry.get('text') or '').strip()
+        if not text:
+            continue
+        if role not in ('user', 'model'):
+            continue
+        contents.append({'role': role, 'parts': [{'text': text}]})
+    contents.append({'role': 'user', 'parts': [{'text': user_message}]})
+
+    system_instruction = (
+        'Siz WordRunner ingliz tili ta\'lim platformasining do\'stona AI o\'qituvchisisiz. '
+        'Foydalanuvchilar o\'zbek tilida so\'zlashuvchi boshlang\'ich va o\'rta darajali ingliz tili o\'rganuvchilari. '
+        'Grammatika, lug\'at, talaffuz va misollarni o\'zbek tilida aniq va qisqa tushuntiring. '
+        'Foydalanuvchi inglizcha muloqot qilishni so\'rasa, inglizcha javob bering. '
+        'Har doim quvvatlovchi, ijobiy va ixcham bo\'ling. '
+        'Javobingiz 400 so\'zdan oshmasin.'
+    )
+
+    payload = {
+        'system_instruction': {'parts': [{'text': system_instruction}]},
+        'contents': contents,
+        'generationConfig': {
+            'temperature': 0.7,
+            'maxOutputTokens': 600
+        }
+    }
+
+    headers = {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': api_key
+    }
+
+    primary_model = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash-lite')
+    fallback_model = 'gemini-2.0-flash'
+
+    def call_gemini(model_name):
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent'
+        return requests.post(url, json=payload, headers=headers, timeout=25)
+
+    try:
+        resp = call_gemini(primary_model)
+        if resp.status_code in (404, 503):
+            print(f'[chat] Primary model {primary_model} returned {resp.status_code}, trying fallback.')
+            resp = call_gemini(fallback_model)
+
+        if resp.status_code != 200:
+            print(f'[chat] Gemini API error {resp.status_code}: {resp.text[:300]}')
+            return jsonify({'error': 'AI xizmatida xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.'}), 502
+
+        result = resp.json()
+        reply_text = (
+            result
+            .get('candidates', [{}])[0]
+            .get('content', {})
+            .get('parts', [{}])[0]
+            .get('text', '')
+        ).strip()
+
+        if not reply_text:
+            return jsonify({'error': 'AI bo\'sh javob qaytardi. Iltimos, boshqacha savol bering.'}), 502
+
+        return jsonify({'reply': reply_text})
+
+    except requests.Timeout:
+        print('[chat] Gemini API timeout')
+        return jsonify({'error': 'AI javobi kechikdi. Internet aloqangizni tekshiring va qayta urinib ko\'ring.'}), 504
+    except Exception as e:
+        print(f'[chat] Unexpected error: {e}')
+        return jsonify({'error': 'Kutilmagan xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.'}), 500
+
+
+# -----------------------------------------------------------------------
+# 12. Admin panel (see admin.py)
 # -----------------------------------------------------------------------
 from admin import register_admin, is_admin_session
 
