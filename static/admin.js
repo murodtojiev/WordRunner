@@ -147,7 +147,10 @@
     document.querySelectorAll('.side-link[data-page]').forEach((a) => a.classList.toggle('active', a.dataset.page === key));
     $('pageTitle').textContent = PAGES[key].title;
     $('topbarActions').innerHTML = '';
-    if (key === 'questions') addTopButton('+ Yangi savol', () => openQuestionForm());
+    if (key === 'questions') {
+      addTopButton("📥 Ko'p savol", () => openBulkForm());
+      addTopButton('+ Yangi savol', () => openQuestionForm(null, parseInt(qState.difficulty, 10) || 0));
+    }
     if (key === 'vocab') addTopButton("+ Yangi so'z", () => openVocabForm());
     if (key === 'dashboard' || key === 'users') addTopButton('↻ Yangilash', () => PAGES[key].load());
     closeSidebar();
@@ -337,7 +340,7 @@
   // ------------------------------------------------------------------
   // 3. Questions
   // ------------------------------------------------------------------
-  const qState = { page: 1, q: '', category: '' };
+  const qState = { page: 1, q: '', category: '', difficulty: '' };
 
   function initCategorySelect() {
     $('qCategory').innerHTML = '<option value="">Barcha kategoriyalar</option>' +
@@ -346,8 +349,9 @@
 
   async function loadQuestions() {
     try {
-      const qs = new URLSearchParams({ page: qState.page, q: qState.q, category: qState.category });
+      const qs = new URLSearchParams({ page: qState.page, q: qState.q, category: qState.category, difficulty: qState.difficulty });
       const d = await api('GET', '/admin/api/questions?' + qs);
+      renderQLevelTabs(d.difficulty_counts || {}, d.all_total);
       $('qCount').textContent = 'Topildi: ' + d.total + ' / ' + d.all_total;
       window.__questions = {};
       d.questions.forEach((q) => { window.__questions[q.id] = q; });
@@ -356,6 +360,58 @@
       renderPager($('qPager'), d.page, d.pages, (p) => { qState.page = p; loadQuestions(); });
     } catch (e) { toast(e.message, true); }
   }
+  function renderQLevelTabs(counts, total) {
+    let html = '<button data-diff=""' + (qState.difficulty === '' ? ' class="active"' : '') + '>Barchasi<span class="c">' + total + '</span></button>';
+    [1, 2, 3, 4].forEach((d) => {
+      const n = counts[d] || 0;
+      html += '<button data-diff="' + d + '"' + (String(qState.difficulty) === String(d) ? ' class="active"' : '') + '>' +
+        esc(DIFFS[d]) + '<span class="c"' + (n < 30 ? ' style="color:var(--amber);opacity:1"' : '') + '>' + n + '</span></button>';
+    });
+    $('qLevelTabs').innerHTML = html;
+  }
+  $('qLevelTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-diff]');
+    if (!b) return;
+    qState.difficulty = b.dataset.diff; qState.page = 1; loadQuestions();
+  });
+
+  function openBulkForm() {
+    const wrap = document.createElement('div');
+    wrap.style.display = 'contents';
+    wrap.innerHTML =
+      '<div class="field"><label>Daraja</label><select id="bDiff">' +
+      [1, 2, 3, 4].map((d) => '<option value="' + d + '">' + esc(DIFFS[d]) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Kategoriya (hammasi uchun)</label><select id="bCat">' +
+      CATEGORIES.map((c) => '<option value="' + c + '">' + esc(catLabel(c)) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Savollar (har qatorda bittadan)</label>' +
+      '<textarea id="bText" rows="9" style="resize:vertical;font-family:monospace;font-size:13px" ' +
+      'placeholder="She ___ a teacher. | am | is | are | be | 2&#10;Choose the antonym of “OLD” | New | Big | Tall | Cold | 1"></textarea>' +
+      '<div class="hint">Format: <b>savol | A | B | C | D | to\'g\'ri javob (1–4)</b>. Bir martada 100 tagacha. ' +
+      'Birorta qatorda xato bo\'lsa, hech narsa qo\'shilmaydi.</div></div>' +
+      '<div class="form-error" id="bErr" style="white-space:pre-line"></div>';
+    openModal({
+      title: "Ko'p savol qo'shish",
+      body: wrap,
+      buttons: [
+        { label: 'Bekor qilish', onClick: closeModal },
+        {
+          label: "Qo'shish", cls: 'primary',
+          onClick: async (btn) => {
+            btn.disabled = true; $('bErr').textContent = '';
+            try {
+              const d = await api('POST', '/admin/api/questions/bulk', {
+                difficulty: parseInt($('bDiff').value, 10), category: $('bCat').value, text: $('bText').value,
+              });
+              closeModal(); toast(d.added + " ta savol qo'shildi");
+              qState.difficulty = $('bDiff').value; qState.page = 1; loadQuestions();
+            } catch (err) { $('bErr').textContent = err.message; btn.disabled = false; }
+          },
+        },
+      ],
+    });
+    $('bDiff').value = parseInt(qState.difficulty, 10) || 1;
+  }
+
   function questionRow(q) {
     return '<tr data-id="' + q.id + '"><td class="q-text">' + esc(q.question) + '</td>' +
       '<td><span class="badge cat">' + esc(catLabel(q.category)) + '</span> ' +
@@ -385,9 +441,9 @@
 
   const DIFFS = { 1: 'A1 · Boshlang\'ich', 2: 'A2 · Elementar', 3: 'B1 · O\'rta', 4: 'B2 · O\'rta-yuqori' };
 
-  function openQuestionForm(q) {
+  function openQuestionForm(q, presetDiff) {
     const isEdit = !!q;
-    const data = q || { question: '', options: ['', '', '', ''], answer: 0, category: 'grammar', difficulty: 2 };
+    const data = q || { question: '', options: ['', '', '', ''], answer: 0, category: 'grammar', difficulty: presetDiff || 2 };
     const wrap = document.createElement('div');
     wrap.style.display = 'contents';
     wrap.innerHTML =

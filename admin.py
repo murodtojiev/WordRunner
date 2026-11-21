@@ -300,11 +300,15 @@ def register_admin(app, get_db, db_execute):
         page, per_page, offset = page_args(20)
         term = (request.args.get("q") or "").strip()
         category = request.args.get("category")
+        difficulty = request.args.get("difficulty", type=int)
 
         conds, params = [], []
         if term:
             conds.append("question ILIKE ?")
             params.append(like(term))
+        if difficulty in (1, 2, 3, 4):
+            conds.append("difficulty = ?")
+            params.append(difficulty)
         if category in CATEGORIES:
             conds.append("category = ?")
             params.append(category)
@@ -317,6 +321,7 @@ def register_admin(app, get_db, db_execute):
                 params + [per_page, offset],
             ).fetchall()
             counts = q("SELECT category, COUNT(*) AS c FROM questions GROUP BY category").fetchall()
+            diff_counts = q("SELECT difficulty, COUNT(*) AS c FROM questions GROUP BY difficulty").fetchall()
             all_total = q("SELECT COUNT(*) AS c FROM questions").fetchone()["c"]
 
         return jsonify({
@@ -326,7 +331,52 @@ def register_admin(app, get_db, db_execute):
             "page": page,
             "pages": max(1, -(-total // per_page)),
             "category_counts": {c["category"]: c["c"] for c in counts},
+            "difficulty_counts": {str(c["difficulty"]): c["c"] for c in diff_counts},
         })
+
+    @admin_bp.route("/api/questions/bulk", methods=["POST"])
+    @admin_api
+    def bulk_questions():
+        """Ko'p savolni birdan qo'shadi. Har qator: savol | A | B | C | D | to'g'ri javob (1-4).
+        Birorta qatorda xato bo'lsa, hech narsa qo'shilmaydi (qayta yuborish oson bo'lishi uchun)."""
+        data = request.get_json(silent=True) or {}
+        difficulty = data.get("difficulty")
+        category = data.get("category")
+        lines = [ln.strip() for ln in (data.get("text") or "").splitlines() if ln.strip()]
+        if not lines:
+            return jsonify({"error": "Savollar kiritilmagan"}), 400
+        if len(lines) > 100:
+            return jsonify({"error": "Bir martada 100 tadan ko'p savol kiritmang"}), 400
+
+        items, errors = [], []
+        for n, line in enumerate(lines, 1):
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) != 6:
+                errors.append(f"{n}-qator: 6 ta qism kerak (savol | A | B | C | D | to'g'ri javob 1-4)")
+                continue
+            if not parts[5].isdigit() or not 1 <= int(parts[5]) <= 4:
+                errors.append(f"{n}-qator: to'g'ri javob 1 dan 4 gacha raqam bo'lsin")
+                continue
+            item, err = clean_question({
+                "question": parts[0], "options": parts[1:5], "answer": int(parts[5]) - 1,
+                "category": category, "difficulty": difficulty,
+            })
+            if err:
+                errors.append(f"{n}-qator: {err}")
+                continue
+            items.append(item)
+
+        if errors:
+            more = f"\n…va yana {len(errors) - 5} ta xato" if len(errors) > 5 else ""
+            return jsonify({"error": "\n".join(errors[:5]) + more}), 400
+
+        with db() as q:
+            for it in items:
+                q(
+                    "INSERT INTO questions (question, options, answer, category, difficulty) VALUES (?, ?, ?, ?, ?)",
+                    (it["question"], Json(it["options"]), it["answer"], it["category"], it["difficulty"]),
+                )
+        return jsonify({"status": "ok", "added": len(items)}), 201
 
     @admin_bp.route("/api/questions", methods=["POST"])
     @admin_api
