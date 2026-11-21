@@ -81,6 +81,7 @@ def init_db():
         )
     """)
     db_execute(conn, engine, "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ")
+    db_execute(conn, engine, "ALTER TABLE users ADD COLUMN IF NOT EXISTS skill_level INTEGER")
     db_execute(conn, engine, """
         CREATE TABLE IF NOT EXISTS questions (
             id SERIAL PRIMARY KEY,
@@ -90,6 +91,7 @@ def init_db():
             category VARCHAR(30) DEFAULT 'grammar'
         )
     """)
+    db_execute(conn, engine, "ALTER TABLE questions ADD COLUMN IF NOT EXISTS difficulty INTEGER")
     db_execute(conn, engine, """
         CREATE TABLE IF NOT EXISTS level_plays (
             id SERIAL PRIMARY KEY,
@@ -531,6 +533,7 @@ def authorize():
         "picture": user["picture"],
         "total_score": user["total_score"],
         "current_level": user["current_level"],
+        "skill_level": user.get("skill_level"),
         "email_verified": bool(user_info.get("email_verified", False)),
     }
     touch_last_active(user["id"])
@@ -555,8 +558,9 @@ def index():
         if fresh:
             session["user"]["total_score"] = fresh["total_score"]
             session["user"]["current_level"] = fresh["current_level"]
+            session["user"]["skill_level"] = fresh.get("skill_level")
             user = session["user"]
-    return render_template("index.html", user=user, active_page="home")
+    return render_template("index.html", user=user, active_page="home", skill_levels=SKILL_LEVELS)
 
 
 @app.route("/map")
@@ -566,10 +570,14 @@ def map_page():
         return redirect(url_for("login"))
     fresh = get_user_by_id(user["id"])
     if fresh:
+        if not fresh.get("skill_level"):
+            return redirect(url_for("index"))  # avval darajani tanlash kerak
         session["user"]["total_score"] = fresh["total_score"]
         session["user"]["current_level"] = fresh["current_level"]
+        session["user"]["skill_level"] = fresh["skill_level"]
         user = session["user"]
-    return render_template("index.html", user=user, active_page="map")
+    return render_template("index.html", user=user, active_page="map",
+                           current_skill=skill_info(fresh.get("skill_level") if fresh else None))
 
 
 @app.route("/leaderboard")
@@ -679,6 +687,39 @@ SEED_QUESTIONS = [
 ]
 
 
+# Foydalanuvchi tanlaydigan ingliz tili darajalari (savollar shu bo'yicha beriladi)
+SKILL_LEVELS = [
+    {"id": 1, "code": "A1", "name": "Boshlang'ich",    "desc": "Oddiy so'zlar va eng asosiy grammatika"},
+    {"id": 2, "code": "A2", "name": "Elementar",       "desc": "Kundalik iboralar, o'tgan zamon, taqqoslash"},
+    {"id": 3, "code": "B1", "name": "O'rta",           "desc": "Sinonim/antonimlar, murakkabroq zamonlar"},
+    {"id": 4, "code": "B2", "name": "O'rta-yuqori",    "desc": "Ilg'or lug'at, idiomalar, perfect zamonlar"},
+]
+
+
+def skill_info(skill_id):
+    return next((s for s in SKILL_LEVELS if s["id"] == skill_id), None)
+
+
+# Boshlang'ich 60 ta savolning qiyinlik darajasi (id bo'yicha). Admin qo'shgan yangilari formadan oladi.
+DIFFICULTY_BY_ID = {
+    1: [1, 2, 3, 4, 5, 6, 9, 10, 12, 13, 14, 21, 28, 44, 47, 56],
+    2: [7, 8, 15, 18, 19, 22, 23, 25, 27, 30, 33, 34, 36, 37, 50, 58],
+    3: [16, 17, 20, 24, 26, 29, 35, 39, 40, 41, 42, 43, 46, 51, 55, 60],
+    4: [11, 31, 32, 38, 45, 48, 49, 52, 53, 54, 57, 59],
+}
+
+
+def tag_question_difficulty():
+    """Darajasi hali belgilanmagan savollarga qiyinlik beradi (bir necha marta ishlasa ham zarari yo'q)."""
+    conn, engine = get_db()
+    for tier, ids in DIFFICULTY_BY_ID.items():
+        db_execute(conn, engine,
+            "UPDATE questions SET difficulty = ? WHERE id = ANY(?) AND difficulty IS NULL", (tier, ids))
+    db_execute(conn, engine, "UPDATE questions SET difficulty = 2 WHERE difficulty IS NULL")
+    conn.commit()
+    conn.close()
+
+
 def categorize_question(text):
     t = text.lower()
     if "synonym" in t: return "synonym"
@@ -713,20 +754,56 @@ def seed_questions():
 init_db()
 seed_vocab()
 seed_questions()
+tag_question_difficulty()
+
+
+@app.route("/api/set-skill", methods=["POST"])
+@login_required
+def set_skill():
+    """Foydalanuvchi o'z ingliz tili darajasini (1-4) tanlaydi."""
+    data = request.get_json(silent=True) or {}
+    skill = data.get("skill")
+    if not isinstance(skill, int) or isinstance(skill, bool) or skill not in (1, 2, 3, 4):
+        return jsonify({"error": "invalid skill"}), 400
+    conn, engine = get_db()
+    db_execute(conn, engine, "UPDATE users SET skill_level = ? WHERE id = ?", (skill, session["user"]["id"]))
+    conn.commit()
+    conn.close()
+    session["user"]["skill_level"] = skill
+    session.modified = True
+    session.pop("recent_ids", None)
+    return jsonify({"status": "ok", "skill_level": skill})
 
 
 @app.route("/api/question")
 @login_required
 def get_question():
-    last_id = session.get("last_id") or 0
+    user = get_user_by_id(session["user"]["id"])
+    skill = (user or {}).get("skill_level")
+
     conn, engine = get_db()
     try:
-        cur = db_execute(conn, engine,
-            "SELECT id, question, options FROM questions WHERE id != ? ORDER BY RANDOM() LIMIT 1", (last_id,))
+        if skill:
+            cur = db_execute(conn, engine, "SELECT id FROM questions WHERE difficulty = ?", (skill,))
+            ids = [r["id"] for r in cur.fetchall()]
+            if len(ids) < 4:  # daraja uchun savol juda kam bo'lsa, qo'shni darajalarni ham olamiz
+                cur = db_execute(conn, engine,
+                    "SELECT id FROM questions WHERE difficulty BETWEEN ? AND ?", (skill - 1, skill + 1))
+                ids = [r["id"] for r in cur.fetchall()]
+        else:
+            cur = db_execute(conn, engine, "SELECT id FROM questions")
+            ids = [r["id"] for r in cur.fetchall()]
+
+        if not ids:
+            return jsonify({"error": "no questions"}), 404
+
+        # So'nggi savollar takrorlanmasin
+        recent = session.get("recent_ids") or []
+        candidates = [i for i in ids if i not in recent] or [i for i in ids if i != session.get("last_id")] or ids
+        qid = random.choice(candidates)
+
+        cur = db_execute(conn, engine, "SELECT id, question, options FROM questions WHERE id = ?", (qid,))
         picked = cur.fetchone()
-        if picked is None:
-            cur = db_execute(conn, engine, "SELECT id, question, options FROM questions ORDER BY RANDOM() LIMIT 1")
-            picked = cur.fetchone()
     finally:
         conn.close()
 
@@ -734,6 +811,7 @@ def get_question():
         return jsonify({"error": "no questions"}), 404
 
     session["last_id"] = picked["id"]
+    session["recent_ids"] = (recent + [picked["id"]])[-8:]
     return jsonify({
         "id": picked["id"],
         "question": picked["question"],

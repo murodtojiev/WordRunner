@@ -358,7 +358,8 @@
   }
   function questionRow(q) {
     return '<tr data-id="' + q.id + '"><td class="q-text">' + esc(q.question) + '</td>' +
-      '<td><span class="badge cat">' + esc(catLabel(q.category)) + '</span></td>' +
+      '<td><span class="badge cat">' + esc(catLabel(q.category)) + '</span> ' +
+      '<span class="badge lvl">' + esc((DIFFS[q.difficulty] || '').split(' ')[0] || '—') + '</span></td>' +
       '<td><div class="opts">' + q.options.map((o, i) =>
         '<span class="opt' + (i === q.answer ? ' correct' : '') + '">' + LETTERS[i] + ') ' + esc(o) + '</span>').join('') + '</div></td>' +
       '<td class="actions"><button class="btn sm" data-act="edit">Tahrirlash</button>' +
@@ -382,15 +383,19 @@
     });
   });
 
+  const DIFFS = { 1: 'A1 · Boshlang\'ich', 2: 'A2 · Elementar', 3: 'B1 · O\'rta', 4: 'B2 · O\'rta-yuqori' };
+
   function openQuestionForm(q) {
     const isEdit = !!q;
-    const data = q || { question: '', options: ['', '', '', ''], answer: 0, category: 'grammar' };
+    const data = q || { question: '', options: ['', '', '', ''], answer: 0, category: 'grammar', difficulty: 2 };
     const wrap = document.createElement('div');
     wrap.style.display = 'contents';
     wrap.innerHTML =
       '<div class="field"><label>Savol matni</label><input type="text" id="fQ" maxlength="300" placeholder="Masalan: Choose the synonym of “HAPPY”"></div>' +
       '<div class="field"><label>Kategoriya</label><select id="fCat">' +
       CATEGORIES.map((c) => '<option value="' + c + '">' + esc(catLabel(c)) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Daraja</label><select id="fDiff">' +
+      [1, 2, 3, 4].map((d) => '<option value="' + d + '">' + esc(DIFFS[d]) + '</option>').join('') + '</select></div>' +
       '<div class="field"><label>Variantlar (to\'g\'ri javobni belgilang)</label>' +
       [0, 1, 2, 3].map((i) => '<div class="opt-input"><input type="radio" name="fAns" value="' + i + '" title="To\'g\'ri javob">' +
         '<input type="text" class="fOpt" maxlength="100" placeholder="' + LETTERS[i] + ' varianti"></div>').join('') +
@@ -407,6 +412,7 @@
             const payload = {
               question: $('fQ').value.trim(),
               category: $('fCat').value,
+              difficulty: parseInt($('fDiff').value, 10),
               options: [...document.querySelectorAll('.fOpt')].map((i) => i.value.trim()),
               answer: parseInt((document.querySelector('input[name=fAns]:checked') || {}).value, 10),
             };
@@ -423,6 +429,7 @@
     });
     $('fQ').value = data.question;
     $('fCat').value = data.category;
+    $('fDiff').value = data.difficulty || 2;
     document.querySelectorAll('.fOpt').forEach((i, idx) => { i.value = data.options[idx] || ''; });
     document.querySelectorAll('input[name=fAns]')[data.answer].checked = true;
   }

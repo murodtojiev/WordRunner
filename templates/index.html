@@ -83,6 +83,12 @@
         <span class="mobile-nav-label">O'yinlar</span>
       </a>
     {% endif %}
+    {% if is_admin %}
+      <a href="/admin" class="mobile-nav-item">
+        <span class="mobile-nav-icon">🛡️</span>
+        <span class="mobile-nav-label">Admin</span>
+      </a>
+    {% endif %}
   </nav>
 
   <!-- ===== MAIN CONTENT CONTAINER ===== -->
@@ -104,13 +110,39 @@
 
         <div class="hero-cta-group">
           {% if user %}
-            <a href="/map" class="btn-hero-primary">
-              <span>Davom etish</span>
-              <span class="btn-arrow">→</span>
-            </a>
-            <a href="/leaderboard" class="btn-hero-secondary">
-              <span>🏆 Reytingni ko'rish</span>
-            </a>
+            <div class="skill-picker">
+              <h2 class="skill-title">Ingliz tili darajangizni tanlang</h2>
+              <p class="skill-sub">Savollar siz tanlagan darajaga mos beriladi. Darajani keyin ham o'zgartira olasiz.</p>
+              <div class="skill-grid">
+                {% for s in skill_levels %}
+                <button type="button" class="skill-card{% if user.skill_level == s.id %} selected{% endif %}" data-skill="{{ s.id }}">
+                  <span class="skill-code">{{ s.code }}</span>
+                  <span class="skill-name">{{ s.name }}</span>
+                  <span class="skill-desc">{{ s.desc }}</span>
+                  {% if user.skill_level == s.id %}<span class="skill-tag">Sizning darajangiz</span>{% endif %}
+                </button>
+                {% endfor %}
+              </div>
+            </div>
+            <script>
+              document.querySelectorAll('.skill-card').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
+                  var all = document.querySelectorAll('.skill-card');
+                  all.forEach(function (b) { b.disabled = true; });
+                  try {
+                    var r = await fetch('/api/set-skill', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ skill: parseInt(btn.dataset.skill, 10) })
+                    });
+                    if (!r.ok) throw new Error('fail');
+                    window.location.href = '/map';
+                  } catch (e) {
+                    alert("Xatolik yuz berdi, qayta urinib ko'ring.");
+                    all.forEach(function (b) { b.disabled = false; });
+                  }
+                });
+              });
+            </script>
           {% else %}
             <a href="{{ url_for('login') }}" class="btn-hero-primary">
               <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="btn-g-logo">
@@ -188,6 +220,7 @@
           <span class="map-eyebrow">BOSQICHMA-BOSQICH RIVOJLANISH</span>
           <h1 class="map-view-title">O'RGANISH YO'L XARITASI</h1>
           <p class="map-view-subtitle">Keyingi bosqichni ochish uchun har bir darajada 15 ta so'zga to'g'ri javob bering.</p>
+          {% if current_skill %}<a href="/" class="skill-chip">🎯 {{ current_skill.code }} · {{ current_skill.name }} — o'zgartirish</a>{% endif %}
         </div>
 
         <div class="map-path-card">

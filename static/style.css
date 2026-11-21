@@ -2337,3 +2337,34 @@ body {
     font-size: 16px;
   }
 }
+
+
+/* =====================================================================
+   SKILL LEVEL PICKER (daraja tanlash)
+   ===================================================================== */
+.skill-picker { width: 100%; max-width: 860px; margin: 0 auto; }
+.skill-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.skill-sub { color: var(--text-mid); font-size: 15px; margin-bottom: 22px; }
+.skill-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.skill-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+  padding: 20px 12px 18px; color: inherit; font-family: inherit; cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.skill-card:hover:not(:disabled) { transform: translateY(-3px); border-color: var(--cyan); box-shadow: 0 8px 26px rgba(0, 240, 255, 0.12); }
+.skill-card:disabled { opacity: .6; cursor: wait; }
+.skill-card.selected { border-color: var(--indigo); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.45); }
+.skill-code { font-size: 30px; font-weight: 800; color: var(--cyan); line-height: 1; }
+.skill-name { font-size: 15px; font-weight: 700; }
+.skill-desc { font-size: 12px; color: var(--text-mid); line-height: 1.4; }
+.skill-tag { margin-top: 6px; font-size: 11px; font-weight: 700; color: #fff; background: var(--indigo); border-radius: 99px; padding: 3px 10px; }
+.skill-chip {
+  display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 600; text-decoration: none;
+  color: var(--cyan); border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 99px; padding: 6px 14px;
+}
+.skill-chip:hover { background: rgba(0, 240, 255, 0.1); }
+@media (max-width: 768px) {
+  .skill-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .skill-title { font-size: 20px; }
+}

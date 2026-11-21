@@ -270,6 +270,7 @@ def register_admin(app, get_db, db_execute):
         options = data.get("options")
         category = data.get("category")
         answer = data.get("answer")
+        difficulty = data.get("difficulty", 2)
 
         if not text:
             return None, "Savol matni bo'sh bo'lmasligi kerak"
@@ -288,7 +289,10 @@ def register_admin(app, get_db, db_execute):
             return None, "To'g'ri javob tanlanmagan"
         if category not in CATEGORIES:
             return None, "Kategoriya noto'g'ri"
-        return {"question": text, "options": options, "answer": answer, "category": category}, None
+        if not isinstance(difficulty, int) or isinstance(difficulty, bool) or difficulty not in (1, 2, 3, 4):
+            return None, "Daraja noto'g'ri"
+        return {"question": text, "options": options, "answer": answer, "category": category,
+                "difficulty": difficulty}, None
 
     @admin_bp.route("/api/questions")
     @admin_api
@@ -309,7 +313,7 @@ def register_admin(app, get_db, db_execute):
         with db() as q:
             total = q(f"SELECT COUNT(*) AS c FROM questions {where}", params).fetchone()["c"]
             rows = q(
-                f"SELECT id, question, options, answer, category FROM questions {where} ORDER BY id DESC LIMIT ? OFFSET ?",
+                f"SELECT id, question, options, answer, category, difficulty FROM questions {where} ORDER BY id DESC LIMIT ? OFFSET ?",
                 params + [per_page, offset],
             ).fetchall()
             counts = q("SELECT category, COUNT(*) AS c FROM questions GROUP BY category").fetchall()
@@ -332,8 +336,8 @@ def register_admin(app, get_db, db_execute):
             return jsonify({"error": err}), 400
         with db() as q:
             row = q(
-                "INSERT INTO questions (question, options, answer, category) VALUES (?, ?, ?, ?) RETURNING id",
-                (item["question"], Json(item["options"]), item["answer"], item["category"]),
+                "INSERT INTO questions (question, options, answer, category, difficulty) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                (item["question"], Json(item["options"]), item["answer"], item["category"], item["difficulty"]),
             ).fetchone()
         return jsonify({"status": "ok", "id": row["id"]}), 201
 
@@ -345,8 +349,8 @@ def register_admin(app, get_db, db_execute):
             return jsonify({"error": err}), 400
         with db() as q:
             cur = q(
-                "UPDATE questions SET question = ?, options = ?, answer = ?, category = ? WHERE id = ?",
-                (item["question"], Json(item["options"]), item["answer"], item["category"], qid),
+                "UPDATE questions SET question = ?, options = ?, answer = ?, category = ?, difficulty = ? WHERE id = ?",
+                (item["question"], Json(item["options"]), item["answer"], item["category"], item["difficulty"], qid),
             )
             if cur.rowcount == 0:
                 return jsonify({"error": "Savol topilmadi"}), 404
